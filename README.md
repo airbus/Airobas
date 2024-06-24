@@ -2,16 +2,21 @@
 
 ## Introduction
 
-**What is Airobas?** `A(i)robas` is a library that combines verification tool for neural network into pipeline.
+**What is Airobas?** `A(i)robas` is a library that combines verification tool for neural network into a pipeline.
 It provides functionalities to:
+
 – load input data and models,
+
 – define a robustness property to be verified. The code has been implemented
 to be as generic as possible and highly parametrizable regarding property
 definition,
+
 – design customized verification pipeline,
+
 – run verification with a default set of empirical and formal methods e.g., at-
 tacks using the cleverhans library, incomplete verification using LiRPA-based
-functionalities implemented in decomon etc.,
+functionalities implemented in [decomon](https://github.com/airbus/decomon) etc.,
+
 – append new verification functions or link the code to open-source libraries
 of one’s choice
 

@@ -25,6 +25,7 @@ This open source code is a support to our publication ["Surrogate Neural Network
 Aircraft Predictive Maintenance"](https://arxiv.org/abs/2401.06821)
 
 **Complete Verification Pipeline for Stability**
+
 The state-of-the-art property verification of neural networks is currently divided into three
 families of methods. They all take as input test points and a trained model and return
 for every test point if the property is violated or verified.
@@ -42,7 +43,7 @@ a network’s stability but are generally fast.
 at the cost of significant computation time.
 
 <div align="center">
-    <img src="https://raw.githubusercontent.com/airbus/Airobas/main/docs/source/pipeline.jpg" width="55%" alt="decomon" align="center" />
+    <img src="https://raw.githubusercontent.com/airbus/Airobas/main/docs/source/pipeline.png" width="55%" alt="pipeline" align="center" />
 </div>
 
 

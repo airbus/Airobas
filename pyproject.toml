@@ -19,7 +19,7 @@ dependencies =[
     "decomon==0.1.1",
     "gurobipy",
     "onnx",
-    "ipywidgets"
+    "ipywidgets",
     "numba",
     "matplotlib",
     "numpy >=1.23",

@@ -39,7 +39,7 @@ is verified. If the bounds are too loose and exceed the required stability inter
 no conclusion can be drawn. So far, these methods called incomplete methods are
 partial in the sense that they do not provide an absolute solution to the question of
 a network’s stability but are generally fast.
-- The last family of methods corresponds to the ’yes/no’ complete methods ((block C)). Examples include [SMT](https://github.com/NeuralNetworkVerification/Marabou) or [MILP](https://gurobi-machinelearning.readthedocs.io/en/stable/index.html) solvers, which provide an exact answer
+- The last family of methods corresponds to the ’yes/no’ complete methods (block C). Examples include [SMT](https://github.com/NeuralNetworkVerification/Marabou) or [MILP](https://gurobi-machinelearning.readthedocs.io/en/stable/index.html) solvers, which provide an exact answer
 at the cost of significant computation time.
 
 <div align="center">

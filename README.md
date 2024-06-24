@@ -14,7 +14,7 @@ definition,
 – design customized verification pipeline,
 
 – run verification with a default set of empirical and formal methods e.g., at-
-tacks using the cleverhans library, incomplete verification using LiRPA-based
+tacks using the [cleverhans](https://github.com/cleverhans-lab/cleverhans) library, incomplete verification using LiRPA-based
 functionalities implemented in [decomon](https://github.com/airbus/decomon) etc.,
 
 – append new verification functions or link the code to open-source libraries
@@ -29,7 +29,7 @@ Aircraft Predictive Maintenance"](https://arxiv.org/abs/2401.06821)
 The state-of-the-art property verification of neural networks is currently divided into three
 families of methods. They all take as input test points and a trained model and return
 for every test point if the property is violated or verified.
-- Firstly, there are the ’no/maybe’ methods (block A), such as adversarial attacks Essentially, these methods rely on the search for counterexamples that would
+- Firstly, there are the ’no/maybe’ methods (block A), such as [adversarial attacks](https://github.com/cleverhans-lab/cleverhans). Essentially, these methods rely on the search for counterexamples that would
 contradict the stability property. If no counterexample is found, no conclusion can
 be drawn.
 - Secondly, there are the ’yes/maybe’ (block B) methods, such as the affine bounds

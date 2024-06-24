@@ -36,6 +36,10 @@ a network’s stability but are generally fast.
 - The last family of methods corresponds to the ’yes/no’ complete methods ((block C)). Examples include [SMT](https://github.com/NeuralNetworkVerification/Marabou) or [MILP](https://gurobi-machinelearning.readthedocs.io/en/stable/index.html) solvers, which provide an exact answer
 at the cost of significant computation time.
 
+<div align="center">
+    <img src="https://raw.githubusercontent.com/airbus/Airobas/main/docs/source/pipeline.jpg" width="55%" alt="decomon" align="center" />
+</div>
+
 
 ## Installation
 

@@ -43,7 +43,7 @@ a network’s stability but are generally fast.
 at the cost of significant computation time.
 
 <div align="center">
-    <img src="https://raw.githubusercontent.com/airbus/Airobas/main/docs/source/pipeline.png" width="55%" alt="pipeline" align="center" />
+    <img src="https://github.com/airbus/Airobas/blob/main/docs/pipeline_plusnumbers_plusletters.png" width="75%" alt="pipeline" align="center" />
 </div>
 
 

@@ -1,0 +1,76 @@
+[build-system]
+requires = ["setuptools>=64", "setuptools_scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "AIROBAS"
+description = "AI ROBustness ASsessment"
+readme = "README.md"
+authors = [
+    {email ="audrey.galametz@airbus.com"},
+]
+requires-python = ">=3.9"
+dependencies =[
+    "pandas",
+    "keras<3",
+    "tensorflow==2.15",
+    "scipy",
+    "cleverhans",
+    "decomon==0.1.1",
+    "gurobipy",
+    "onnx",
+    "ipywidgets"
+    "numba",
+    "matplotlib",
+    "numpy >=1.23",
+    "keras>=3",
+]
+
+dynamic = ["version"]
+
+[project.urls]
+documentation = "https://airbus.github.io/Airobas"
+repository = "https://github.com/airbus/Airobas"
+
+[project.optional-dependencies]
+dev = ["tox>=4.6.4"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[tool.setuptools_scm]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = [
+    "--import-mode=importlib",
+    "--ignore=tests/lirpa_comparison",
+    "--ignore=tests/test_deel_lip.py",
+]
+
+[tool.black]
+line-length = 120
+target-version = ['py39']
+include = '\.pyi?$'
+exclude = '''
+
+(
+  /(
+      \.eggs         # exclude a few common directories in the
+    | \.git          # root of the project
+    | \.hg
+    | \.mypy_cache
+    | \.tox
+    | \.venv
+    | _build
+    | buck-out
+    | build
+    | dist
+    | tests/.*/setup.py
+  )/
+  | foo.py           # also separately exclude a file named foo.py in
+                     # the root of the project
+)
+'''
+
+ignore_missing_imports = true

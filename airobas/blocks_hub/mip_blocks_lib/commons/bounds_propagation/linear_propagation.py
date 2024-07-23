@@ -1,5 +1,5 @@
 import airobas.blocks_hub.mip_blocks_lib.commons.bounds_propagation.bounds_function_linear as bounds_linear
-from airobas import blocks_hub as bounds_relu
+import airobas.blocks_hub.mip_blocks_lib.commons.bounds_propagation.bounds_function_relu as bounds_relu
 from airobas.blocks_hub.mip_blocks_lib.commons.layers import InputLayer, Relu
 from airobas.blocks_hub.mip_blocks_lib.commons.neural_network import NeuralNetwork
 from airobas.blocks_hub.mip_blocks_lib.commons.parameters import Bounds

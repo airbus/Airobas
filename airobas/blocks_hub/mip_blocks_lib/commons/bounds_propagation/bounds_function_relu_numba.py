@@ -3,8 +3,8 @@ from typing import Dict, Optional
 import numpy as np
 from numba import njit
 
-from blocks_hub.mip_blocks_lib.commons.layers import Layer, Relu
-from blocks_hub.mip_blocks_lib.commons.linearfunctions import (
+from airobas.blocks_hub.mip_blocks_lib.commons.layers import Layer, Relu
+from airobas.blocks_hub.mip_blocks_lib.commons.linearfunctions import (
     LinearFunctions,
     compute_max_values_numba,
     compute_min_values_numba,
@@ -12,7 +12,7 @@ from blocks_hub.mip_blocks_lib.commons.linearfunctions import (
     get_lower_relu_relax_numba,
     get_upper_relu_relax_numba,
 )
-from blocks_hub.mip_blocks_lib.commons.parameters import Bounds
+from airobas.blocks_hub.mip_blocks_lib.commons.parameters import Bounds
 
 
 def compute_bounds_numba(

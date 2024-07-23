@@ -3,7 +3,7 @@ from typing import List
 
 from gurobipy import GRB, Model, Var, quicksum
 
-from blocks_hub.mip_blocks_lib.commons.formula import (
+from airobas.blocks_hub.mip_blocks_lib.commons.formula import (
     EQ,
     GE,
     GT,
@@ -22,7 +22,7 @@ from blocks_hub.mip_blocks_lib.commons.formula import (
     VarVarConstraint,
     transform_to_leq_constraint,
 )
-from blocks_hub.mip_blocks_lib.commons.neural_network import NeuralNetwork
+from airobas.blocks_hub.mip_blocks_lib.commons.neural_network import NeuralNetwork
 
 
 def create_formula_for_local_robustness(label: int, output_dim: int, offset=0):

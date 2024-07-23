@@ -16,15 +16,15 @@ import logging
 
 from tensorflow.python.keras.models import Model  # , Sequential, load_model
 
-from blocks_hub.mip_blocks_lib.commons.bounds_propagation.bounds_computation_interface import (
-    BoundComputation,
+from airobas.blocks_hub.mip_blocks_lib.commons.bounds_propagation.bounds_computation_interface import (
+    BoundComputation
 )
-from blocks_hub.mip_blocks_lib.commons.bounds_propagation.linear_propagation import (
+from airobas.blocks_hub.mip_blocks_lib.commons.bounds_propagation.linear_propagation import (
     Bounds,
     compute_bounds_linear_propagation,
 )
-from blocks_hub.mip_blocks_lib.commons.layers import Linear, Relu
-from blocks_hub.mip_blocks_lib.commons.neural_network import (
+from airobas.blocks_hub.mip_blocks_lib.commons.layers import Linear, Relu
+from airobas.blocks_hub.mip_blocks_lib.commons.neural_network import (
     NeuralNetwork,
     neural_network_to_keras,
 )

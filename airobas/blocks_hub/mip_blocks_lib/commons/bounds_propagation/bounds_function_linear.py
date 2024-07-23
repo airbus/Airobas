@@ -2,9 +2,9 @@ from typing import Optional
 
 import numpy as np
 
-from blocks_hub.mip_blocks_lib.commons.layers import Layer
-from blocks_hub.mip_blocks_lib.commons.linearfunctions import LinearFunctions
-from blocks_hub.mip_blocks_lib.commons.parameters import Bounds
+from airobas.blocks_hub.mip_blocks_lib.commons.layers import Layer
+from airobas.blocks_hub.mip_blocks_lib.commons.linearfunctions import LinearFunctions
+from airobas.blocks_hub.mip_blocks_lib.commons.parameters import Bounds
 
 
 def compute_bounds(

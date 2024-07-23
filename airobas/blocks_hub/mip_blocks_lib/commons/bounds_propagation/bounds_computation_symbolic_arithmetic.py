@@ -1,11 +1,11 @@
-from blocks_hub.mip_blocks_lib.commons.bounds_propagation.bounds_computation_interface import (
+from airobas.blocks_hub.mip_blocks_lib.commons.bounds_propagation.bounds_computation_interface import (
     BoundComputation,
 )
-from blocks_hub.mip_blocks_lib.commons.bounds_propagation.linear_propagation import (
+from airobas.blocks_hub.mip_blocks_lib.commons.bounds_propagation.linear_propagation import (
     compute_bounds_linear_propagation,
 )
-from blocks_hub.mip_blocks_lib.commons.neural_network import NeuralNetwork
-from blocks_hub.mip_blocks_lib.commons.parameters import Bounds
+from airobas.blocks_hub.mip_blocks_lib.commons.neural_network import NeuralNetwork
+from airobas.blocks_hub.mip_blocks_lib.commons.parameters import Bounds
 
 
 def default_propagation(neural_network: NeuralNetwork):

@@ -6,31 +6,27 @@ import gurobipy as gp
 import numpy as np
 from gurobi_ml import add_predictor_constr
 
-from blocks_hub.mip_blocks_lib.commons.bounds_propagation.bounds_computation_utils import (
-    create_object_bounds,
-)
-from blocks_hub.mip_blocks_lib.commons.formula import (
+from airobas.blocks_hub.mip_blocks_lib.commons.bounds_propagation.bounds_computation_utils import create_object_bounds
+from airobas.blocks_hub.mip_blocks_lib.commons.formula import (
     GT,
     LT,
     NAryConjFormula,
     StateCoordinate,
     VarConstConstraint,
 )
-from blocks_hub.mip_blocks_lib.commons.neural_network import (
+from airobas.blocks_hub.mip_blocks_lib.commons.neural_network import (
     InputBoundsNeuralNetwork,
     NeuralNetwork,
 )
-from blocks_hub.mip_blocks_lib.commons.parameters import (
+from airobas.blocks_hub.mip_blocks_lib.commons.parameters import (
     ParamsBoundComputation,
     ParamsBoundComputationEnum,
 )
-from blocks_hub.mip_blocks_lib.commons.utilities.evaluate import evaluate, random_input
-from blocks_hub.mip_blocks_lib.linear.verification_formula.verification_constraints import (
-    get_callback_specific,
+from airobas.blocks_hub.mip_blocks_lib.commons.utilities.evaluate import evaluate, random_input
+from airobas.blocks_hub.mip_blocks_lib.linear.verification_formula.verification_constraints import (
     get_output_constrs,
-    get_output_constrs_specific,
 )
-from verif_pipeline import (
+from airobas.verif_pipeline import (
     BlockVerif,
     BlockVerifOutput,
     DataContainer,

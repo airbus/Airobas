@@ -5,10 +5,10 @@ from time import perf_counter
 import numpy as np
 from maraboupy import Marabou, MarabouCore
 from maraboupy.MarabouNetwork import MarabouNetwork  # (pip install maraboupy)
-from tensorflow.keras.layers import Activation, Dense, Input
+from tensorflow.keras.layers import Activation, Dense
 from tensorflow.keras.models import Sequential
 
-from verif_pipeline import (
+from airobas.verif_pipeline import (
     BlockVerif,
     BlockVerifOutput,
     DataContainer,

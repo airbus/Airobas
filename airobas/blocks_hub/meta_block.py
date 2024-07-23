@@ -2,7 +2,7 @@ from typing import Dict, List, Tuple, Type
 
 import numpy as np
 
-from verif_pipeline import (
+from airobas.verif_pipeline import (
     BlockVerif,
     BlockVerifOutput,
     DataContainer,

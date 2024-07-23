@@ -13,6 +13,7 @@ from smt.sampling_methods import LHS
 from airobas.blocks_hub.adv_block import CleverHansMultiIndexAdvBlock
 from airobas.blocks_hub.decomon_block import DecomonBlock
 from airobas.blocks_hub.marabou_block import MarabouBlock
+from airobas.blocks_hub.gml_mip_block import GMLBrick
 from airobas.verif_pipeline import ProblemContainer, BoundsDomainBoxParameterPerValueInterval, BoundsDomainBoxParameter, \
     StabilityProperty, full_verification_pipeline, StatusVerif
 
@@ -225,7 +226,8 @@ def main_script():
                                               [{"index_target": i,
                                                 "attack_up": True,
                                                 "fgs": True} for i in range(yt.shape[1])]})]
-    blocks += [(DecomonBlock, {}), (MarabouBlock, {"time_out": 100})]
+    # blocks += [(DecomonBlock, {}), (MarabouBlock, {"time_out": 100})]
+    blocks += [(DecomonBlock, {}), (GMLBrick, {})]
     t1 = time.perf_counter()
     global_verif = full_verification_pipeline(problem=container,
                                               input_points=xtest,

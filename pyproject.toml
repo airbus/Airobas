@@ -19,7 +19,7 @@ dependencies =[
     "cleverhans",
     "decomon==0.1.1",
     "gurobi-machinelearning",
-    "maraboupy",
+    "maraboupy==1.0.0",
     "onnx",
     "ipywidgets",
     "numba",

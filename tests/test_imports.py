@@ -2,7 +2,7 @@ import pytest
 
 
 def test_imports():
-    import gurobi
+    import gurobipy
     import gurobi_ml
     import maraboupy
     import verif_pipeline

@@ -1,6 +1,6 @@
 import numpy as np
 
-from airobas.blocks_hub.mip_blocks_lib.commons.layers import Linear, NeuralNetwork, Relu
+from airobas.blocks_hub.mip_blocks_lib.commons.neural_network import Linear, NeuralNetwork, Relu
 
 
 def random_input(neural_net: NeuralNetwork):

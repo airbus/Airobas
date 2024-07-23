@@ -2,7 +2,7 @@ import airobas.blocks_hub.mip_blocks_lib.commons.bounds_propagation.bounds_funct
 from airobas import blocks_hub as bounds_relu
 from airobas.blocks_hub.mip_blocks_lib.commons.layers import InputLayer, Relu
 from airobas.blocks_hub.mip_blocks_lib.commons.neural_network import NeuralNetwork
-from airobas.blocks_hub.mip_blocks_lib.commons.bounds_propagation.bounds_computation_interface import Bounds
+from airobas.blocks_hub.mip_blocks_lib.commons.parameters import Bounds
 
 
 def compute_bounds_linear_propagation(

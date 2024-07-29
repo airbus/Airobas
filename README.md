@@ -64,4 +64,9 @@ The latest documentation is available [online](https://airbus.github.io/airobas)
 
 ## Examples
 
-Some educational notebooks will be available *soon*.
+### Tutorial Breaking distance Estimation
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/airbus/Airobas/blob/main/tutorials/braking_distance_estimation_verification.ipynb)
+
+### Surrogate of Rosenbrock function
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/airbus/Airobas/blob/main/tutorials/rosenbrock_verification.ipynb
+)

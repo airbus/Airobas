@@ -2,11 +2,7 @@
 import pytest
 import random
 import time
-import numpy as np
 import keras
-import matplotlib
-from decomon.models import clone
-from matplotlib import pyplot as plt
 from smt.problems import Rosenbrock
 from smt.sampling_methods import LHS
 
@@ -15,75 +11,10 @@ from airobas.blocks_hub.decomon_block import DecomonBlock
 from airobas.blocks_hub.marabou_block import MarabouBlock
 from airobas.blocks_hub.gml_mip_block import GMLBrick
 from airobas.verif_pipeline import ProblemContainer, BoundsDomainBoxParameterPerValueInterval, BoundsDomainBoxParameter, \
-    StabilityProperty, full_verification_pipeline, StatusVerif
+    StabilityProperty, full_verification_pipeline
 
 
-def decomon_computation(model: keras.Model):
-    fun = Rosenbrock(ndim=2)
-    x = np.linspace(-2, 2, 51)
-    res = []
-    points = []
-    for x0 in x:
-        for x1 in x:
-            res.append(fun(np.array([[x0, x1]])))
-            points.append([x0, x1])
-    points = np.array(points)
-    lower = points-0.1
-    upper = points+0.1
-    decomon_model = clone(model)
-    box = np.concatenate([lower[:, None], upper[:, None]], 1)
-    t2 = time.perf_counter()
-    y_up, y_low = decomon_model.predict(box)
-    res = np.array(res)
-    prediction = model.predict(points).reshape((51, 51)).T
-    res = res.reshape((51, 51)).T
-    y_up = y_up.reshape((51, 51)).T
-    y_low = y_low.reshape((51, 51)).T
-    X, Y = np.meshgrid(x, x)
-
-    fig = plt.figure(figsize=(6,6))
-    ax = fig.add_subplot(projection='3d')
-    surf = ax.plot_surface(X, Y, res, cmap=matplotlib.colormaps["Blues"],
-                           linewidth=0, antialiased=False, alpha=0.5, label="ground_truth")
-    surf1 = ax.plot_surface(X, Y, prediction, cmap=matplotlib.colormaps["Greens"],
-                            linewidth=0, antialiased=False, alpha=0.5, label="surrogate")
-    surf2 = ax.plot_surface(X, Y, y_up, cmap=matplotlib.colormaps["Reds"],
-                            linewidth=0, antialiased=False, alpha=0.5, label="upper bound decomon")
-    surf3 = ax.plot_surface(X, Y, y_low, cmap=matplotlib.colormaps["Oranges"],
-                            linewidth=0, antialiased=False, alpha=0.5, label="lower bound decomon")
-    plt.title('Rosenbrock')
-    plt.xlabel('x1')
-    plt.ylabel('x2')
-    plt.legend()
-
-    for j in range(Y.shape[0]):
-        fig, ax = plt.subplots(1)
-        ax.plot(X[j, :], res[j, :], color="blue", label="ground_truth")
-        ax.plot(X[j, :], prediction[j, :], color="green", label="surrogate")
-        ax.plot(X[j, :], y_up[j, :], color="red", label="upper bound decomon")
-        ax.plot(X[j, :], y_low[j, :], color="orange", label="lower bound decomon")
-        ax.legend()
-        slice = str(round(Y[j,0],2))
-#        ax.set_title(f"Slice x2 = {Y[j,0]}")
-#        fig.savefig(os.path.join(image_dump_folder, f"slice_x2eq{Y[j,0]}.png"))
-        ax.set_title(f"Slice x2 = " + slice)
-        ax.set_xlabel('x1')
-        plt.close(fig)
-
-    for j in range(X.shape[0]):
-        fig, ax = plt.subplots(1)
-        ax.plot(Y[:, j], res[:, j], color="blue", label="ground_truth")
-        ax.plot(Y[:, j], prediction[:, j], color="green", label="surrogate")
-        ax.plot(Y[:, j], y_up[:, j], color="red", label="upper bound decomon")
-        ax.plot(Y[:, j], y_low[:, j], color="orange", label="lower bound decomon")
-        ax.legend()
-        slice = str(round(X[0, j],2))
-        ax.set_title(f"Slice x1 = " + slice)
-        ax.set_xlabel('x2')
-        plt.close(fig)
-
-
-def create_points(n_training: int = 20, n_test = 200):
+def create_points(n_training: int = 20, n_test=200):
     ########### Initialization of the problem, construction of the training and validation points
     ndim = 2
     n_training = n_training
@@ -103,51 +34,10 @@ def create_points(n_training: int = 20, n_test = 200):
     return xt, yt, xtest, ytest, fun
 
 
-def create_points_grid(grid_size: int = 51, fraction_training: float = 0.2):
-    fun = Rosenbrock(ndim=2)
-    x = np.linspace(-2, 2, grid_size)
-    res = []
-    points = []
-    for x0 in x:
-        for x1 in x:
-            res.append(fun(np.array([[x0, x1]])))
-            points.append([x0, x1])
-    random_indexes = set(random.sample(range(len(points)), k=int(fraction_training*len(points))))
-    xt = np.array([points[i] for i in random_indexes])
-    yt = np.array([res[i] for i in random_indexes])
-    xtest = np.array([points[i] for i in range(len(points)) if i not in random_indexes])
-    ytest = np.array([res[i][0] for i in range(len(points)) if i not in random_indexes])
-    return xt, yt, xtest, ytest, fun
-
-
-def plot_3d(xt, yt, xtest, ytest, fun, name_figure = "Rosenbrock function"):
-    x = np.linspace(-2, 2, 51)
-    res = []
-    for x0 in x:
-        for x1 in x:
-            res.append(fun(np.array([[x0, x1]])))
-    res = np.array(res)
-    res = res.reshape((51, 51)).T
-    X, Y = np.meshgrid(x, x)
-    fig = plt.figure(figsize=(15, 10))
-    ax = fig.add_subplot(projection='3d')
-    surf = ax.plot_surface(X, Y, res, cmap=matplotlib.colormaps["viridis"],
-                           linewidth=0, antialiased=False, alpha=0.5)
-    if xt is not None:
-        ax.scatter(xt[:, 0], xt[:, 1], yt, zdir='z', marker='x', c='b', s=200, label='Training point')
-    if xtest is not None:
-        ax.scatter(xtest[:, 0], xtest[:, 1], ytest, zdir='z', marker='.', c='k', s=200, label='Validation point')
-    plt.title(name_figure)
-    plt.xlabel('x1')
-    plt.ylabel('x2')
-    plt.legend()
-
-
 def train_model(xt, yt, xtest, ytest, nb_epoch: int = 5000):
     import numpy as np
     from keras.models import Sequential
     from keras.layers import Dense
-    from keras.regularizers import l2
     from keras.optimizers import Adam
     from sklearn.metrics import mean_squared_error
     # Generate some dummy data for training
@@ -215,8 +105,6 @@ class RosenbrockContainer(ProblemContainer):
 def main_script():
     xt, yt, xtest, ytest, fun = create_points(n_training=300, n_test=500)
     model, y_pred = train_model(xt, yt, xtest, ytest, nb_epoch=300)
-    decomon_computation(model)
-    plt.show()
     container = RosenbrockContainer.create_rosenbrock_container(model,
                                                                 abs_noise_input=0.01,
                                                                 abs_noise_output=10,
@@ -237,25 +125,6 @@ def main_script():
     t2 = time.perf_counter()
     print(t2-t1, " seconds to run pipeline")
     print(xt.shape, yt.shape, xtest.shape, ytest.shape)
-    # To visualize the DOE points
-    fig = plt.figure(figsize=(10, 10))
-    plt.scatter(xt[:, 0], xt[:, 1], marker='x', c='b', s=200, label='Training points')
-    plt.scatter(xtest[:, 0], xtest[:, 1], marker='.', c='k', s=200, label='Validation points')
-    plt.title('DOE')
-    plt.xlabel('x1')
-    plt.ylabel('x2')
-    plt.legend()
-    plot_3d(xt, yt, xtest, ytest, fun)
-    indexes = np.nonzero(global_verif.status == StatusVerif.VIOLATED)
-    cnt_x = np.array([x for x in global_verif.inputs if x is not None])
-    cnt_y = np.array([global_verif.outputs[i] for i in range(len(global_verif.outputs))
-                      if global_verif.outputs[i] is not None])
-    print('expected',
-          [y_pred[i] for i in range(len(global_verif.outputs))
-           if global_verif.outputs[i] is not None])
-    print('cnt', cnt_y)
-    plot_3d(None, None, cnt_x, cnt_y, fun)
-    plt.show()
 
 
 def test_rosenbrock_main():

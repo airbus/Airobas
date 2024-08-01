@@ -11,7 +11,7 @@ from keras.activations import linear, relu
 from keras.layers import Activation, Dense
 from keras.models import Sequential
 
-from blocks_hub.mip_blocks_lib.commons.layers import (
+from airobas.blocks_hub.mip_blocks_lib.commons.layers import (
     InputLayer,
     InputType,
     Layer,

@@ -1,8 +1,7 @@
-import blocks_hub.mip_blocks_lib.commons.bounds_propagation.bounds_function_linear as bounds_linear
-import blocks_hub.mip_blocks_lib.commons.bounds_propagation.bounds_function_relu as bounds_relu
-from blocks_hub.mip_blocks_lib.commons.layers import InputLayer, Relu
-from blocks_hub.mip_blocks_lib.commons.neural_network import NeuralNetwork
-from blocks_hub.mip_blocks_lib.commons.parameters import Bounds
+from airobas import blocks_hub as bounds_relu
+from airobas.blocks_hub.mip_blocks_lib.commons.layers import InputLayer, Relu
+from airobas.blocks_hub.mip_blocks_lib.commons.neural_network import NeuralNetwork
+from airobas.blocks_hub.mip_blocks_lib.commons.parameters import Bounds
 
 
 def compute_bounds_linear_propagation(
@@ -15,6 +14,8 @@ def compute_bounds_linear_propagation(
 ):
     if method is None:
         method = Bounds.SYMBOLIC_INT_ARITHMETIC
+    input_lower = lmodel.input.bounds["in"]["l"]
+    input_upper = lmodel.input.bounds["in"]["u"]
     if start == -1:
         # begin computation from the input layer
         lmodel.input.compute_bounds()
@@ -34,19 +35,21 @@ def compute_bounds_linear_propagation(
                 b_v = binary_vars[l]
             else:
                 b_v = []
-            bounds_relu.compute_bounds(
+            bounds_relu.compute_bounds_numba(
                 current_layer=lmodel.layers[l],
                 previous_layer=p_l,
                 method=method,
                 runtime=runtime,
                 binary_vars=b_v,
-                input_bounds=lmodel.input.bounds,
+                input_lower=input_lower,
+                input_upper=input_upper,
             )
         else:
-            bounds_linear.compute_bounds(
+            bounds_relu.compute_bounds_numba(
                 current_layer=lmodel.layers[l],
                 previous_layer=p_l,
                 method=method,
-                input_bounds=lmodel.input.bounds,
+                input_lower=input_lower,
+                input_upper=input_upper,
             )
         p_l = lmodel.layers[l]

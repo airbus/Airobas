@@ -1,0 +1,19 @@
+# Mac
+.DS_Store
+
+# IDE
+.*/
+
+# Python
+__pycache__/
+.python-version
+
+# Temp files
+*.tmp
+
+# Build files
+build/
+dist/
+# don't update locally created images and dump file
+tutorials/dump.txt
+tutorials/rosenbrock_images/*.png

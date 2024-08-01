@@ -5,7 +5,7 @@ from typing import Dict, Optional
 
 import numpy as np
 
-from blocks_hub.mip_blocks_lib.commons.linearfunctions import LinearFunctions
+from airobas.blocks_hub.mip_blocks_lib.commons.linearfunctions import LinearFunctions
 
 
 class LayerType(Enum):

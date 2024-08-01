@@ -10,13 +10,13 @@ from smt.utils.misc import compute_rms_error
 import matplotlib.pyplot as plt
 import scipy.interpolate
 from mpl_toolkits.mplot3d import Axes3D
-#from matplotlib.cm import get_cmap
+# from matplotlib.cm import get_cmap
 from smt.problems import Sphere, NdimRobotArm, Rosenbrock
 from smt.sampling_methods import LHS
-from blocks_hub.adv_block import CleverHansMultiIndexAdvBlock
-from blocks_hub.decomon_block import DecomonBlock
-from blocks_hub.marabou_block import MarabouBlock
-from verif_pipeline import ProblemContainer, StabilityProperty, BoundsDomainBoxParameter, full_verification_pipeline, \
+from airobas.blocks_hub.adv_block import CleverHansMultiIndexAdvBlock
+from airobas.blocks_hub.decomon_block import DecomonBlock
+from airobas.blocks_hub.marabou_block import MarabouBlock
+from airobas.verif_pipeline import ProblemContainer, StabilityProperty, BoundsDomainBoxParameter, full_verification_pipeline, \
     StatusVerif, BoundsDomainBoxParameterPerValueInterval, compute_bounds
 from decomon.models import clone
 import random
@@ -348,6 +348,7 @@ def decomon_computation(model: keras.Model):
         ax.set_xlabel('x2')
         fig.savefig(os.path.join(image_dump_folder, f"slice_x1eq" + slice + ".png"))
         plt.close(fig)
+
 
 if __name__ == "__main__":
     main_script_grid()

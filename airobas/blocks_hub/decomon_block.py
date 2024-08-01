@@ -3,7 +3,7 @@ import time
 import numpy as np
 from decomon.models import clone
 
-from verif_pipeline import BlockVerif, BlockVerifOutput, StatusVerif
+from airobas.verif_pipeline import BlockVerif, BlockVerifOutput, StatusVerif
 
 
 def check_SB_unsat(y_pred_min, y_pred_max, y_min, y_max):

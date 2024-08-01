@@ -2,7 +2,8 @@
 
 ## Introduction
 
-**What is Airobas?** `A(i)robas` is a library that combines verification tool for neural network into a pipeline.
+**What is Airobas?** `A(i)robas` is a library that allows the combinaison of verification tools for neural network into a pipeline.
+
 It provides functionalities to:
 
 – load input data and models,
@@ -11,39 +12,33 @@ It provides functionalities to:
 to be as generic as possible and highly parametrizable regarding property
 definition,
 
-– design customized verification pipeline,
+– design a customized verification pipeline,
 
-– run verification with a default set of empirical and formal methods e.g., at-
-tacks using the [cleverhans](https://github.com/cleverhans-lab/cleverhans) library, incomplete verification using LiRPA-based
-functionalities implemented in [decomon](https://github.com/airbus/decomon) etc.,
+– run verification with a default set of empirical and formal methods e.g., adversarial attacks using the [cleverhans](https://github.com/cleverhans-lab/cleverhans) library, incomplete verification using LiRPA-based
+functionalities implemented in the Airbus open-source library [decomon](https://github.com/airbus/decomon) etc.,
 
-– append new verification functions or link the code to open-source libraries
-of one’s choice
+– append new verification functions or link the code to the open-source libraries of one’s choice
 
-We believe that Airobas is a complementary tool to existing libraries for the certification of neural networks.
-This open source code is a support to our publication ["Surrogate Neural Networks Local Stability for
-Aircraft Predictive Maintenance"](https://arxiv.org/abs/2401.06821)
+We believe that Airobas is a complementary tool to existing libraries for the robustness verification of neural networks.
+This open source code is a complement to the publication ["Surrogate Neural Networks Local Stability for
+Aircraft Predictive Maintenance"](https://arxiv.org/abs/2401.06821) which was peer-reviewed and accepted at the 29th International Conference on Formal Methods for Industrial Critical Systems ([FMICS2024](https://fmics.inria.fr/2024/)).
 
 **Complete Verification Pipeline for Stability**
 
-The state-of-the-art property verification of neural networks is currently divided into three
-families of methods. They all take as input test points and a trained model and return
-for every test point if the property is violated or verified.
-- Firstly, there are the ’no/maybe’ methods (block A), such as [adversarial attacks](https://github.com/cleverhans-lab/cleverhans). Essentially, these methods rely on the search for counterexamples that would
-contradict the stability property. If no counterexample is found, no conclusion can
-be drawn.
-- Secondly, there are the ’yes/maybe’ (block B) methods, such as the affine bounds
-implemented in the [Decomon library](https://github.com/airbus/decomon). Here, the outputs of a network are
-bounded. If the bounds found are within the stability bounds, then the property
-is verified. If the bounds are too loose and exceed the required stability interval,
-no conclusion can be drawn. So far, these methods called incomplete methods are
-partial in the sense that they do not provide an absolute solution to the question of
-a network’s stability but are generally fast.
-- The last family of methods corresponds to the ’yes/no’ complete methods (block C). Examples include [SMT](https://github.com/NeuralNetworkVerification/Marabou) or [MILP](https://gurobi-machinelearning.readthedocs.io/en/stable/index.html) solvers, which provide an exact answer
-at the cost of significant computation time.
+Verification techniques for neural networks take test points, a trained model and a given property (robustness, stability, monotonicity etc.) as input and return for every test point an assessment of whether or not the property is violated or verified.
+
+The current state-of-the-art mainly encaompasses three families of methods:
+
+- The ’no/maybe’ methods (Family of techniques 'A' in paper): e.g. [adversarial attacks](https://github.com/cleverhans-lab/cleverhans). These methods essentially rely on the search for counterexamples that contradict the targeted property. If no counterexample is found, no conclusion can be drawn on the model output w.r.t to the targeted property.
+
+- The ’yes/maybe’ methods (Family of techniques 'B' in paper): e.g. the affine bounds generation methods implemented in the [decomon library](https://github.com/airbus/decomon). These techniques intend to bound the output values of a network. If the derived bounds respect the property, it is verified. If the bounds exceed it, no conclusion can be drawn. It can then either mean that the propety is violated or that the derived bounds are too loose. These methods are commonly refered to as 'incomplete' (since they can guarantee the property is respected but not that it is violated). They are however generally faster than 'complete' methods (see next).
+
+- The ’yes/no’ methods (Family of techniques 'C' in paper): e.g., [SMT](https://github.com/NeuralNetworkVerification/Marabou), [MILP](https://gurobi-machinelearning.readthedocs.io/en/stable/index.html) solvers etc. They can guarantee that the neural network output resepct or not the targeted property, at the cost of significant computation time. They are commonly refered to as 'complete' techniques.
+
+Here is an example of NN verification pipeline:
 
 <div align="center">
-    <img src="https://github.com/airbus/Airobas/blob/main/docs/pipeline_plusnumbers_plusletters.png" width="75%" alt="pipeline" align="center" />
+    <img src="https://github.com/airbus/Airobas/blob/main/docs/pipeline.png" width="75%" alt="pipeline" align="center" />
 </div>
 
 
@@ -53,15 +48,11 @@ Quick version:
 ```shell
 pip install .
 ```
-For more details, see the [online documentation](https://airbus.github.io/airobas/main/install).
-
-
-
-
-## Documentation
-
-The latest documentation is available [online](https://airbus.github.io/airobas).
 
 ## Examples
 
-Some educational notebooks will be available *soon*.
+Notebooks providing examples of the use of the library are available in the "tutorials" folder:
+
+- Use case "Aircraft braking distance estimation" [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/airbus/Airobas/blob/main/tutorials/braking_distance_estimation_verification.ipynb)
+
+- Use case "NN surrogate for Rosenbrock function" [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/airbus/Airobas/blob/main/tutorials/rosenbrock_verification.ipynb)

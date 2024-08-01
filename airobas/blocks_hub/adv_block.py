@@ -7,8 +7,8 @@ import tensorflow.keras.backend as K
 from cleverhans.tf2.attacks.fast_gradient_method import fast_gradient_method
 from cleverhans.tf2.attacks.projected_gradient_descent import projected_gradient_descent
 
-from blocks_hub.meta_block import MetaBlock
-from verif_pipeline import (
+from airobas.blocks_hub.meta_block import MetaBlock
+from airobas.verif_pipeline import (
     BlockVerif,
     BlockVerifOutput,
     DataContainer,

@@ -169,19 +169,16 @@ def full_verification_pipeline(
     if output_points is None:
         output_points = problem.model.predict(input_points, verbose=0)
     t_0 = time.perf_counter()
-    print("Before compute bounds input")
 
     x_min, x_max = compute_bounds(
         problem.stability_property, input_points, is_input=True
     )
-    print("Before compute bounds output")
     # Bounds for input ..
     y_min, y_max = compute_bounds(
         problem.stability_property, output_points, is_input=False
     )
-    print("after compute bounds output")
     #loop for batches
-    nb_samples=input_points.shape[0]#here we get nb_samples, with one sample it's always one?
+    nb_samples=x_min.shape[0]#here we get nb_samples, with one sample it's always one?
     batch_size=nb_samples//batch_split+1
     
     if nb_samples % batch_split != 0:  # Handle uneven division
@@ -190,7 +187,8 @@ def full_verification_pipeline(
     t_n=0
     
     for i in range(batch_split):
-        print(f"Batch number {i}")
+        if verbose:
+            print(f"Batch number {i}")
         start_idx = i * batch_size
         end_idx = min((i + 1) * batch_size, nb_samples)  # Ensure end_idx does not exceed array length
     
@@ -209,11 +207,11 @@ def full_verification_pipeline(
         if len(input_sample_i)==0:
             print(f"Batch {i + 1} is empty. Breaking.")
             break
-
-        print(f"Processing batch {i + 1}/{batch_split}:")
-        print(f"Start index: {start_idx}, End index: {end_idx}")
-        print(f"Input batch shape: {input_sample_i.shape}")
-        print(f"Output batch shape: {output_sample_i.shape}")
+        if verbose:
+            print(f"Processing batch {i + 1}/{batch_split}:")
+            print(f"Start index: {start_idx}, End index: {end_idx}")
+            print(f"Input batch shape: {input_sample_i.shape}")
+            print(f"Output batch shape: {output_sample_i.shape}")
 
         global_verif_output_i,t_n_i=full_verification_pipeline_batch(0,input_sample_i, x_min_i, x_max_i, 
                                         output_sample_i, y_min_i, y_max_i,blocks_verifier,problem)
@@ -227,7 +225,7 @@ def full_verification_pipeline_batch(index_batch,input_points, x_min, x_max, out
                                     y_min, y_max,blocks_verifier,problem):
     # Bounds for desired output
     data = DataContainer(input_points, x_min, x_max, output_points, y_min, y_max)
-    nb_points = input_points.shape[0]
+    nb_points = x_min.shape[0]
     global_verif_output = GlobalVerifOutput(
         methods=[b[0].__name__ for b in blocks_verifier],
         results=[],

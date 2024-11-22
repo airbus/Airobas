@@ -170,8 +170,7 @@ def full_verification_pipeline(
         output_points = problem.model.predict(input_points, verbose=0)
     t_0 = time.perf_counter()
     print("Before compute bounds input")
-    import pdb
-    pdb.set_trace()
+
     x_min, x_max = compute_bounds(
         problem.stability_property, input_points, is_input=True
     )

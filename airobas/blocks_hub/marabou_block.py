@@ -153,9 +153,9 @@ class MarabouSequential(MarabouNetwork):
 
     def solve_query(self, options=None):
         if options is None:
-            result = self.solve(filename="dump.txt", verbose=False)
+            result = self.solve(verbose=False)
         else:
-            result = self.solve(filename="dump.txt", verbose=False, options=options)
+            result = self.solve(verbose=False, options=options)
         input_sat = None
         output_sat = None
 
@@ -188,6 +188,7 @@ def solve_stability_property(
         network.setUpperBound(network.inputVars[0][0][i], x_max_i)
     # find a sample that is either greater than Y_max or lower than Y_min
     equ_list = []
+
     for i in range(network.get_output_dim()):
         if np.isinf(y_min[i]) or np.isinf(y_max[i]):
             continue

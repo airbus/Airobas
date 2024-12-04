@@ -211,7 +211,9 @@ def solve_stability_property(
     t_end_init = time.perf_counter()
     options = None
     if timeout:
-        options = Marabou.createOptions(timeoutInSeconds=int(timeout))
+        options = Marabou.createOptions(timeoutInSeconds=int(timeout),verbosity=0)
+    else:
+        options = Marabou.createOptions(verbosity=0)
     result = network.solve_query(options=options)
     t_end_solve = time.perf_counter()
     network.clearProperty()

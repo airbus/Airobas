@@ -7,7 +7,7 @@ from maraboupy import Marabou, MarabouCore
 from maraboupy.MarabouNetwork import MarabouNetwork  # (pip install maraboupy)
 from tensorflow.keras.layers import Activation, Dense
 from tensorflow.keras.models import Sequential
-
+from keras.models import clone_model
 from airobas.verif_pipeline import (
     BlockVerif,
     BlockVerifOutput,
@@ -18,6 +18,7 @@ from airobas.verif_pipeline import (
 
 logger = logging.getLogger(__name__)
 
+output_name='OUTPUT'
 
 def separate_activations(model: Sequential):
     """
@@ -28,6 +29,7 @@ def separate_activations(model: Sequential):
     """
     l = []
     new_model = Sequential()
+    #copy_model = clone_model(model)
     for layer in model.layers:
         if isinstance(layer, Dense):
             # Add a new Dense layer without activation
@@ -66,7 +68,6 @@ class MarabouSequential(MarabouNetwork):
 
     def build(self):
         for layer in self.layers:
-
             # get input_shape
             input_dim = np.prod(layer.input_shape[1:])
             self.varMap[layer.name] = []
@@ -74,10 +75,11 @@ class MarabouSequential(MarabouNetwork):
                 j = self.getNewVariable()
                 self.varMap[layer.name].append(j)
         output_dim = np.prod(self.keras_model.output_shape[1:])
-        self.varMap["output"] = []
+        global output_name
+        self.varMap[output_name] = []
         for i in range(output_dim):
             j = self.getNewVariable()
-            self.varMap["output"].append(j)
+            self.varMap[output_name].append(j)
 
         self._init_input_vars()
         self._init_output_vars()
@@ -91,7 +93,8 @@ class MarabouSequential(MarabouNetwork):
         ]
 
     def _init_output_vars(self):
-        self.outputVars = np.asarray(self.varMap["output"], dtype="int")[None, None]
+        global output_name
+        self.outputVars = np.asarray(self.varMap[output_name], dtype="int")[None, None]
 
     def buildEquations(self, index_layer, update_relu=True):
         layer = self.layers[index_layer]
@@ -109,8 +112,9 @@ class MarabouSequential(MarabouNetwork):
             raise NotImplemented(layer)
 
     def get_output_layer(self, index_layer):
+        global output_name
         if index_layer + 1 == len(self.layers):
-            output_var = self.varMap["output"]
+            output_var = self.varMap[output_name]
         else:
             output_var = self.varMap[self.layers[index_layer + 1].name]
 
@@ -149,7 +153,8 @@ class MarabouSequential(MarabouNetwork):
             self.addRelu(i, j)
 
     def get_output_dim(self):
-        return len(self.varMap["output"])
+        global output_name
+        return len(self.varMap[output_name])
 
     def solve_query(self, options=None):
         if options is None:

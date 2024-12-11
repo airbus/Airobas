@@ -244,7 +244,8 @@ class CleverHansMultiIndexAdvBlock(MetaBlock):
     ):
         if list_params_adv_block is None:
             list_params_adv_block = [
-                {"index_target": i, "attack_up": b, "fgs": True}
+                {"index_target": i, "attack_up": b, "fgs": c}
+                for c in [True]#,False]
                 for i in range(data_container.output_points.shape[1])
                 for b in [True, False]
             ]

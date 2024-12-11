@@ -85,7 +85,7 @@ class BoundsComputationDecomon(BoundComputation):
 
             def get_bound_relu(layer_relu, relus_bound):
                 def func(x):
-                    bounds = relus_bound.predict(x)
+                    bounds = relus_bound.predict(x,verbose=0)
                     return dict(
                         [(i, u_i) for (i, u_i) in zip(range(len(layer_relu)), bounds)]
                     )

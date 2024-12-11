@@ -139,7 +139,7 @@ class GlobalVerifOutput:
     build_time: float  # sum of individual build time from BlockVerifOutputs(s).
     init_time_per_sample: np.ndarray  # sum of init_time_per_sample from BlockVerifOutputs
     verif_time_per_sample: np.ndarray  # sum of verif_time_per_sample from BlockVerifOutputs
-
+    runtime_per_block: Dict[str,float] # sum of runtime of verification per method/block
 
 class BlockVerif:
     def __init__(
@@ -166,6 +166,7 @@ def full_verification_pipeline(
     blocks_verifier: List[Union[Type[BlockVerif], Dict]],
     verbose: bool = True,
     batch_split: int=1) -> GlobalVerifOutput:
+
     if output_points is None:
         output_points = problem.model.predict(input_points, verbose=0)
     t_0 = time.perf_counter()
@@ -185,7 +186,7 @@ def full_verification_pipeline(
         batch_size += 1
     list_global_verif=[]
     t_n=0
-    
+    runtime_summary = {} # key: method.__name__, value: total runtime in sec 
     for i in range(batch_split):
         if verbose:
             print(f"Batch number {i}")
@@ -212,7 +213,7 @@ def full_verification_pipeline(
             print(f"Start index: {start_idx}, End index: {end_idx}")
             print(f"Input batch shape: {input_sample_i.shape}")
             print(f"Output batch shape: {output_sample_i.shape}")
-
+        
         global_verif_output_i,t_n_i=full_verification_pipeline_batch(0,input_sample_i, x_min_i, x_max_i, 
                                         output_sample_i, y_min_i, y_max_i,blocks_verifier,problem)
         t_n+=t_n_i
@@ -238,6 +239,7 @@ def full_verification_pipeline_batch(index_batch,input_points, x_min, x_max, out
         build_time=0,
         init_time_per_sample=np.empty(nb_points, dtype=float),
         verif_time_per_sample=np.empty(nb_points, dtype=float),
+        runtime_per_block={}
     )
     index = np.arange(nb_points)
     index_method = 0
@@ -249,6 +251,7 @@ def full_verification_pipeline_batch(index_batch,input_points, x_min, x_max, out
         logger.info(f"Running...{method.get_name()}, {len(index)} points to be tested")
         res: BlockVerifOutput = verifier.verif(indexes=index)
         t_end = time.perf_counter()
+        global_verif_output.runtime_per_block[method.__name__]=t_end-t_start # key: method.__name__, value: runtime in sec
         global_verif_output.results.append((res, list(index)))
         for i in range(len(index)):
             global_verif_output.inputs[index[i]] = res.inputs[i]
@@ -273,7 +276,7 @@ def full_verification_pipeline_batch(index_batch,input_points, x_min, x_max, out
         logger.info(
             f"Current violated (%) {np.sum(global_verif_output.status==StatusVerif.VIOLATED)/nb_points*100}"
         )
-        logger.info(f"{t_end-t_start} sec of computing for block {method.__name__}")
+        logger.info(f"{global_verif_output.runtime_per_block[method.__name__]} sec of computing for block {method.__name__}")
         index_method += 1
     # accuracy
     t_n = time.perf_counter()
@@ -283,11 +286,10 @@ def full_verification_pipeline_batch(index_batch,input_points, x_min, x_max, out
 
 
 def merge_global_verif_outputs(list_global_verif: List[GlobalVerifOutput]) -> GlobalVerifOutput:
-    if not list_global_verif:
-        raise ValueError("La liste des objets GlobalVerifOutput est vide.")
+    if not list_global_verif or not len(list_global_verif):
+        raise ValueError("GlobalVerifOutput object list is empty.")
 
-    # Initialisation des attributs fusionnés
-    merged_methods = []
+    # Initialization
     merged_results = []
     merged_status = []
     merged_index_block_that_concluded = []
@@ -296,9 +298,10 @@ def merge_global_verif_outputs(list_global_verif: List[GlobalVerifOutput]) -> Gl
     total_build_time = 0.0
     merged_init_time_per_sample = []
     merged_verif_time_per_sample = []
+    merged_runtime_per_block={}
 
     for global_verif in list_global_verif:
-        merged_methods.extend(global_verif.methods)
+        assert(global_verif.methods==list_global_verif[0].methods)#make sure it's same list for all batches
         merged_results.extend(global_verif.results)
         merged_status.append(global_verif.status)
         
@@ -315,16 +318,19 @@ def merge_global_verif_outputs(list_global_verif: List[GlobalVerifOutput]) -> Gl
         # Temps par sample
         merged_init_time_per_sample.append(global_verif.init_time_per_sample)
         merged_verif_time_per_sample.append(global_verif.verif_time_per_sample)
-
+        for method_name, runtime in global_verif.runtime_per_block.items():
+            merged_runtime_per_block[method_name] = (
+                merged_runtime_per_block.get(method_name, 0) + runtime
+            )
     # Fusionner les tableaux numpy en un seul
     merged_status = np.concatenate(merged_status, axis=0)
     merged_index_block_that_concluded = np.concatenate(merged_index_block_that_concluded, axis=0)
     merged_init_time_per_sample = np.concatenate(merged_init_time_per_sample, axis=0)
     merged_verif_time_per_sample = np.concatenate(merged_verif_time_per_sample, axis=0)
-
+    
     # Retourner un nouvel objet GlobalVerifOutput avec les données fusionnées
     return GlobalVerifOutput(
-        methods=list(set(merged_methods)),
+        methods=list_global_verif[0].methods,#list(set(merged_methods)),
         results=merged_results,
         status=merged_status,
         index_block_that_concluded=merged_index_block_that_concluded,
@@ -332,5 +338,6 @@ def merge_global_verif_outputs(list_global_verif: List[GlobalVerifOutput]) -> Gl
         outputs=merged_outputs,
         build_time=total_build_time,
         init_time_per_sample=merged_init_time_per_sample,
-        verif_time_per_sample=merged_verif_time_per_sample
+        verif_time_per_sample=merged_verif_time_per_sample,
+        runtime_per_block=merged_runtime_per_block
     )

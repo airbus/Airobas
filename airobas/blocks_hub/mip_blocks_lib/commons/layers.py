@@ -4,7 +4,6 @@ from enum import Enum
 from typing import Dict, Optional
 
 import numpy as np
-
 from airobas.blocks_hub.mip_blocks_lib.commons.linearfunctions import LinearFunctions
 
 
@@ -117,12 +116,8 @@ class InputLayer(Layer):
     def compute_bounds(self):
         self.error = {"out": [0 for _ in range(self.output_shape)]}
         size = self.output_shape
-        self.bound_equations["out"]["l"] = LinearFunctions(
-            np.identity(size), np.zeros(size)
-        )
-        self.bound_equations["out"]["u"] = LinearFunctions(
-            np.identity(size), np.zeros(size)
-        )
+        self.bound_equations["out"]["l"] = LinearFunctions(np.identity(size), np.zeros(size))
+        self.bound_equations["out"]["u"] = LinearFunctions(np.identity(size), np.zeros(size))
         self.rnt_bounds = self.bounds
         self.rnt_bound_equations = self.bound_equations
 
@@ -213,9 +208,7 @@ class Relu(Layer):
             return [i for i in range(self.output_shape) if self.is_fixed(i)]
         else:
             return [
-                i
-                for i in range(self.output_shape)
-                if self.is_fixed(i) and binary_vars[i] != 0 and binary_vars[i] != 1
+                i for i in range(self.output_shape) if self.is_fixed(i) and binary_vars[i] != 0 and binary_vars[i] != 1
             ]
 
 
@@ -235,9 +228,7 @@ class Linear(Layer):
 
 
 class NormalisationLayer(Linear):
-    def __init__(
-        self, output_shape: int, shift: np.ndarray, scale: np.ndarray, depth: int
-    ):
+    def __init__(self, output_shape: int, shift: np.ndarray, scale: np.ndarray, depth: int):
         matrix = np.diag(1 / scale)
         bias = -shift / scale
         super().__init__(

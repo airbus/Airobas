@@ -88,22 +88,14 @@ class EUntilFormula(BinaryFormula):
         self.k = k
 
     def __str__(self):
-        return (
-            "E U{}(".format(self.k)
-            + self.left.__str__()
-            + ", "
-            + self.right.__str__()
-            + ")"
-        )
+        return "E U{}(".format(self.k) + self.left.__str__() + ", " + self.right.__str__() + ")"
 
     def to_nnf(self):
         left_nnf = self.left.to_nnf()
         right_nnf = self.right.to_nnf()
         subformula = right_nnf
         for i in range(self.k):
-            subformula = DisjFormula(
-                right_nnf, ConjFormula(left_nnf, ENextFormula(1, subformula))
-            )
+            subformula = DisjFormula(right_nnf, ConjFormula(left_nnf, ENextFormula(1, subformula)))
 
         return subformula
 
@@ -119,13 +111,7 @@ class AUntilFormula(BinaryFormula):
         self.k = k
 
     def __str__(self):
-        return (
-            "A U{}(".format(self.k)
-            + self.left.__str__()
-            + ", "
-            + self.right.__str__()
-            + ")"
-        )
+        return "A U{}(".format(self.k) + self.left.__str__() + ", " + self.right.__str__() + ")"
 
     def to_nnf(self):
         left_nnf = self.left.to_nnf()
@@ -133,9 +119,7 @@ class AUntilFormula(BinaryFormula):
 
         subformula = right_nnf
         for i in range(self.k):
-            subformula = DisjFormula(
-                right_nnf, ConjFormula(left_nnf, ANextFormula(1, subformula))
-            )
+            subformula = DisjFormula(right_nnf, ConjFormula(left_nnf, ANextFormula(1, subformula)))
 
         return subformula
 
@@ -173,14 +157,10 @@ class NegationFormula(UnaryFormula):
             )
 
         if isinstance(subformula, VarConstConstraint):
-            return VarConstConstraint(
-                subformula.op1, inverted_sense[subformula.sense], subformula.op2
-            )
+            return VarConstConstraint(subformula.op1, inverted_sense[subformula.sense], subformula.op2)
 
         if isinstance(subformula, LinExprConstraint):
-            return LinExprConstraint(
-                subformula.op1, inverted_sense[subformula.sense], subformula.op2
-            )
+            return LinExprConstraint(subformula.op1, inverted_sense[subformula.sense], subformula.op2)
 
         if isinstance(subformula, ConjFormula):
             return DisjFormula(
@@ -195,14 +175,10 @@ class NegationFormula(UnaryFormula):
             )
 
         if isinstance(subformula, NAryDisjFormula):
-            return NAryConjFormula(
-                [NegationFormula(clause).to_nnf() for clause in subformula.clauses]
-            )
+            return NAryConjFormula([NegationFormula(clause).to_nnf() for clause in subformula.clauses])
 
         if isinstance(subformula, NAryConjFormula):
-            return NAryDisjFormula(
-                [NegationFormula(clause).to_nnf() for clause in subformula.clauses]
-            )
+            return NAryDisjFormula([NegationFormula(clause).to_nnf() for clause in subformula.clauses])
 
         if isinstance(subformula, ENextFormula):
             return ANextFormula(subformula.k, NegationFormula(subformula.left).to_nnf())
@@ -221,13 +197,9 @@ class NegationFormula(UnaryFormula):
             # left
             left_subformula = right_nnf
             for i in range(subformula.k):
-                left_subformula = ConjFormula(
-                    right_nnf, ANextFormula(1, left_subformula)
-                )
+                left_subformula = ConjFormula(right_nnf, ANextFormula(1, left_subformula))
 
-            right_subformula = AUntilFormula(
-                subformula.k, right_nnf, ConjFormula(right_nnf, left_nnf)
-            ).to_nnf()
+            right_subformula = AUntilFormula(subformula.k, right_nnf, ConjFormula(right_nnf, left_nnf)).to_nnf()
 
             return DisjFormula(left_subformula, right_subformula)
 
@@ -241,13 +213,9 @@ class NegationFormula(UnaryFormula):
 
             left_subformula = right_nnf
             for i in range(subformula.k):
-                left_subformula = ConjFormula(
-                    right_nnf, ENextFormula(1, left_subformula)
-                )
+                left_subformula = ConjFormula(right_nnf, ENextFormula(1, left_subformula))
 
-            right_subformula = EUntilFormula(
-                subformula.k, right_nnf, ConjFormula(right_nnf, left_nnf)
-            ).to_nnf()
+            right_subformula = EUntilFormula(subformula.k, right_nnf, ConjFormula(right_nnf, left_nnf)).to_nnf()
 
             return DisjFormula(left_subformula, right_subformula)
 
@@ -305,9 +273,7 @@ class LinearExpression:
         self.coord_coeff_map = coord_coeff_map
 
     def __str__(self):
-        return " + ".join(
-            ["{}*({})".format(self.coord_coeff_map[i], i) for i in self.coord_coeff_map]
-        )
+        return " + ".join(["{}*({})".format(self.coord_coeff_map[i], i) for i in self.coord_coeff_map])
 
 
 class Constraint(Formula):
@@ -324,9 +290,7 @@ class VarVarConstraint(Constraint):
         self.offset = offset
 
     def __str__(self):
-        return (
-            self.op1.__str__() + self.sense + self.op2.__str__() + self.offset.__str__()
-        )
+        return self.op1.__str__() + self.sense + self.op2.__str__() + self.offset.__str__()
 
 
 class VarConstConstraint(Constraint):

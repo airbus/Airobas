@@ -14,11 +14,8 @@ except ImportError as e:
     print(e)
 import logging
 
-#from tensorflow.python.keras.models import Model  # , Sequential, load_model
-from keras.models import Model
-
 from airobas.blocks_hub.mip_blocks_lib.commons.bounds_propagation.bounds_computation_interface import (
-    BoundComputation
+    BoundComputation,
 )
 from airobas.blocks_hub.mip_blocks_lib.commons.bounds_propagation.linear_propagation import (
     Bounds,
@@ -29,6 +26,9 @@ from airobas.blocks_hub.mip_blocks_lib.commons.neural_network import (
     NeuralNetwork,
     neural_network_to_keras,
 )
+
+# from tensorflow.python.keras.models import Model  # , Sequential, load_model
+from keras.models import Model
 
 logger = logging.getLogger(__file__)
 
@@ -78,18 +78,12 @@ class BoundsComputationDecomon(BoundComputation):
         new_value = []
         nb_fixed_before = self.neural_network.get_nb_fixed()
         if self.compute_intermediary:
-            layer_relu = [
-                layer
-                for layer in self.decomon_model.layers
-                if isinstance(layer, BackwardActivation)
-            ]
+            layer_relu = [layer for layer in self.decomon_model.layers if isinstance(layer, BackwardActivation)]
 
             def get_bound_relu(layer_relu, relus_bound):
                 def func(x):
-                    bounds = relus_bound.predict(x,verbose=0)
-                    return dict(
-                        [(i, u_i) for (i, u_i) in zip(range(len(layer_relu)), bounds)]
-                    )
+                    bounds = relus_bound.predict(x, verbose=0)
+                    return dict([(i, u_i) for (i, u_i) in zip(range(len(layer_relu)), bounds)])
 
                 return func
 
@@ -114,9 +108,7 @@ class BoundsComputationDecomon(BoundComputation):
             value_up = get_upper_relu(values)
             value_down = get_lower_relu(values)
             layers_of_interest = [
-                j
-                for j in range(self.neural_network.nb_layers)
-                if isinstance(self.neural_network.layers[j], Relu)
+                j for j in range(self.neural_network.nb_layers) if isinstance(self.neural_network.layers[j], Relu)
             ]
 
             for i in value_down:
@@ -128,57 +120,33 @@ class BoundsComputationDecomon(BoundComputation):
                     f"norm diff :{np.linalg.norm(corresponding_layer.bounds['in']['l'] - value_down[i][0, :])}"
                 )
                 if self.save_to_debug:
-                    prev_value[-1]["in_l"] = np.array(
-                        corresponding_layer.bounds["in"]["l"]
-                    )
-                    prev_value[-1]["out_l"] = np.array(
-                        corresponding_layer.bounds["out"]["l"]
-                    )
-                    prev_value[-1]["in_u"] = np.array(
-                        corresponding_layer.bounds["in"]["u"]
-                    )
-                    prev_value[-1]["out_u"] = np.array(
-                        corresponding_layer.bounds["out"]["u"]
-                    )
+                    prev_value[-1]["in_l"] = np.array(corresponding_layer.bounds["in"]["l"])
+                    prev_value[-1]["out_l"] = np.array(corresponding_layer.bounds["out"]["l"])
+                    prev_value[-1]["in_u"] = np.array(corresponding_layer.bounds["in"]["u"])
+                    prev_value[-1]["out_u"] = np.array(corresponding_layer.bounds["out"]["u"])
 
                 corresponding_layer.bounds["in"]["l"] = value_down[i][0, :]
 
                 logger.debug(f"Value down shape : {value_down[i].shape}")
                 if isinstance(corresponding_layer, Relu):
-                    corresponding_layer.bounds["out"]["l"] = np.maximum(
-                        0, corresponding_layer.bounds["in"]["l"]
-                    )
+                    corresponding_layer.bounds["out"]["l"] = np.maximum(0, corresponding_layer.bounds["in"]["l"])
                 else:
-                    corresponding_layer.bounds["out"]["l"] = corresponding_layer.bounds[
-                        "in"
-                    ]["l"]
+                    corresponding_layer.bounds["out"]["l"] = corresponding_layer.bounds["in"]["l"]
                 logger.debug(f"Value up shape : {value_up[i].shape}")
-                logger.debug(
-                    f"norm diff : {np.linalg.norm(corresponding_layer.bounds['in']['u'] - value_up[i][0, :])}"
-                )
+                logger.debug(f"norm diff : {np.linalg.norm(corresponding_layer.bounds['in']['u'] - value_up[i][0, :])}")
                 corresponding_layer.bounds["in"]["u"] = value_up[i][0, :]
                 if isinstance(corresponding_layer, Relu):
-                    corresponding_layer.bounds["out"]["u"] = np.maximum(
-                        0, corresponding_layer.bounds["in"]["u"]
-                    )
+                    corresponding_layer.bounds["out"]["u"] = np.maximum(0, corresponding_layer.bounds["in"]["u"])
                 else:
-                    corresponding_layer.bounds["out"]["u"] = corresponding_layer.bounds[
-                        "in"
-                    ]["u"]
+                    corresponding_layer.bounds["out"]["u"] = corresponding_layer.bounds["in"]["u"]
                 if self.save_to_debug:
                     new_value[-1]["in_l"] = value_down[i][0, :]
-                    new_value[-1]["out_l"] = np.array(
-                        corresponding_layer.bounds["out"]["l"]
-                    )
+                    new_value[-1]["out_l"] = np.array(corresponding_layer.bounds["out"]["l"])
                     new_value[-1]["in_u"] = value_up[i][0, :]
-                    new_value[-1]["out_u"] = np.array(
-                        corresponding_layer.bounds["out"]["u"]
-                    )
+                    new_value[-1]["out_u"] = np.array(corresponding_layer.bounds["out"]["u"])
         nb_fixed_after = self.neural_network.get_nb_fixed()
         # box = np.concatenate([X_min[:, None], X_max[:, None]], 1)
-        value_up, value_down = self.decomon_model.predict(
-            np.concatenate([x_min, x_max], axis=1)
-        )
+        value_up, value_down = self.decomon_model.predict(np.concatenate([x_min, x_max], axis=1))
         # value_up = get_upper_box(self.decomon_model, x_min, x_max)
         # value_down = get_lower_box(self.decomon_model, x_min, x_min)
         logger.debug(f"shape, value_up {value_up.shape}")
@@ -188,12 +156,8 @@ class BoundsComputationDecomon(BoundComputation):
         if self.save_to_debug:
             prev_value.append({})
             new_value.append({})
-            prev_value[-1]["out_l"] = np.array(
-                self.neural_network.layers[-1].bounds["out"]["l"]
-            )
-            prev_value[-1]["out_u"] = np.array(
-                self.neural_network.layers[-1].bounds["out"]["u"]
-            )
+            prev_value[-1]["out_l"] = np.array(self.neural_network.layers[-1].bounds["out"]["l"])
+            prev_value[-1]["out_u"] = np.array(self.neural_network.layers[-1].bounds["out"]["u"])
         self.neural_network.layers[-1].bounds["out"]["l"] = value_down[0, :]
         self.neural_network.layers[-1].bounds["out"]["u"] = value_up[0, :]
         if isinstance(self.neural_network.layers[-1], Linear):
@@ -218,11 +182,6 @@ class BoundsComputationDecomon(BoundComputation):
 def get_bound_relu(layer_relu, relus_bound):
     def func(x):
         bounds = relus_bound.predict(x)
-        return dict(
-            [
-                (l_i.name.split("_backward")[0], u_i)
-                for (l_i, u_i) in zip(layer_relu, bounds)
-            ]
-        )
+        return dict([(l_i.name.split("_backward")[0], u_i) for (l_i, u_i) in zip(layer_relu, bounds)])
 
     return func

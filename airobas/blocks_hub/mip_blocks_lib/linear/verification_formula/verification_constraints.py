@@ -1,8 +1,6 @@
 from functools import partial
 from typing import List
 
-from gurobipy import GRB, Model, Var, quicksum
-
 from airobas.blocks_hub.mip_blocks_lib.commons.formula import (
     EQ,
     GE,
@@ -23,14 +21,13 @@ from airobas.blocks_hub.mip_blocks_lib.commons.formula import (
     transform_to_leq_constraint,
 )
 from airobas.blocks_hub.mip_blocks_lib.commons.neural_network import NeuralNetwork
+from gurobipy import GRB, Model, Var, quicksum
 
 
 def create_formula_for_local_robustness(label: int, output_dim: int, offset=0):
     coordinates = [StateCoordinate(i) for i in range(output_dim)]
     atoms = [
-        VarVarConstraint(coordinates[i], LT, coordinates[label], offset)
-        for i in range(output_dim)
-        if i not in [label]
+        VarVarConstraint(coordinates[i], LT, coordinates[label], offset) for i in range(output_dim) if i not in [label]
     ]
     return NAryConjFormula(atoms)
 
@@ -62,25 +59,19 @@ def check_formula_satisfaction(formula: Formula, lower_bounds, upper_bounds):
         sense = formula.sense
         if sense == LT:
             if isinstance(formula, VarVarConstraint):
-                return (
-                    upper_bounds[formula.op1.i]
-                    < lower_bounds[formula.op2.i] + formula.offset
-                )
+                return upper_bounds[formula.op1.i] < lower_bounds[formula.op2.i] + formula.offset
             if isinstance(formula, VarConstConstraint):
                 return upper_bounds[formula.op1.i] < formula.op2
         elif sense == GT:
             if isinstance(formula, VarVarConstraint):
-                return (
-                    lower_bounds[formula.op1.i]
-                    > upper_bounds[formula.op2.i] + formula.offset
-                )
+                return lower_bounds[formula.op1.i] > upper_bounds[formula.op2.i] + formula.offset
             if isinstance(formula, VarConstConstraint):
                 return lower_bounds[formula.op1.i] > formula.op2
 
     if isinstance(formula, ConjFormula):
-        return check_formula_satisfaction(
-            formula.left, lower_bounds, upper_bounds
-        ) and check_formula_satisfaction(formula.right, lower_bounds, upper_bounds)
+        return check_formula_satisfaction(formula.left, lower_bounds, upper_bounds) and check_formula_satisfaction(
+            formula.right, lower_bounds, upper_bounds
+        )
 
     if isinstance(formula, NAryConjFormula):
         for clause in formula.clauses:
@@ -89,9 +80,9 @@ def check_formula_satisfaction(formula: Formula, lower_bounds, upper_bounds):
         return True
 
     if isinstance(formula, DisjFormula):
-        return check_formula_satisfaction(
-            formula.left, lower_bounds, upper_bounds
-        ) or check_formula_satisfaction(formula.right, lower_bounds, upper_bounds)
+        return check_formula_satisfaction(formula.left, lower_bounds, upper_bounds) or check_formula_satisfaction(
+            formula.right, lower_bounds, upper_bounds
+        )
 
     if isinstance(formula, NAryDisjFormula):
         for clause in formula.clauses:
@@ -149,9 +140,7 @@ def get_output_constrs_specific(
 
             return callback
 
-    elif isinstance(output_formula, NAryDisjFormula) or isinstance(
-        output_formula, NAryConjFormula
-    ):
+    elif isinstance(output_formula, NAryDisjFormula) or isinstance(output_formula, NAryConjFormula):
         deltas = []
         lbs = []
         ubs = []
@@ -166,48 +155,20 @@ def get_output_constrs_specific(
                     neural_net.layers[-1].bounds["out"]["u"][formula.op1.i]
                     - neural_net.layers[-1].bounds["out"]["l"][formula.op2.i]
                 )
-                deltas += [
-                    model.addVar(lb=lb, ub=ub, vtype=GRB.CONTINUOUS, name=f"delta_{j}")
-                ]
-                model.addConstr(
-                    deltas[j] == output_vars[formula.op1.i] - output_vars[formula.op2.i]
-                )
+                deltas += [model.addVar(lb=lb, ub=ub, vtype=GRB.CONTINUOUS, name=f"delta_{j}")]
+                model.addConstr(deltas[j] == output_vars[formula.op1.i] - output_vars[formula.op2.i])
             if isinstance(output_formula.clauses[j], VarConstConstraint):
                 formula = transform_to_leq_constraint(output_formula.clauses[j])
                 if isinstance(formula.op1, StateCoordinate):
-                    lb = (
-                        neural_net.layers[-1].bounds["out"]["l"][formula.op1.i]
-                        - formula.op2
-                    )
-                    ub = (
-                        neural_net.layers[-1].bounds["out"]["u"][formula.op1.i]
-                        - formula.op2
-                    )
-                    deltas += [
-                        model.addVar(
-                            lb=lb, ub=ub, vtype=GRB.CONTINUOUS, name=f"delta_{j}"
-                        )
-                    ]
-                    model.addConstr(
-                        deltas[j] == output_vars[formula.op1.i] - formula.op2
-                    )
+                    lb = neural_net.layers[-1].bounds["out"]["l"][formula.op1.i] - formula.op2
+                    ub = neural_net.layers[-1].bounds["out"]["u"][formula.op1.i] - formula.op2
+                    deltas += [model.addVar(lb=lb, ub=ub, vtype=GRB.CONTINUOUS, name=f"delta_{j}")]
+                    model.addConstr(deltas[j] == output_vars[formula.op1.i] - formula.op2)
                 if isinstance(formula.op2, StateCoordinate):
-                    lb = (
-                        formula.op1
-                        - neural_net.layers[-1].bounds["out"]["u"][formula.op2.i]
-                    )
-                    ub = (
-                        formula.op1
-                        - neural_net.layers[-1].bounds["out"]["l"][formula.op2.i]
-                    )
-                    deltas += [
-                        model.addVar(
-                            lb=lb, ub=ub, vtype=GRB.CONTINUOUS, name=f"delta_{j}"
-                        )
-                    ]
-                    model.addConstr(
-                        deltas[j] == formula.op1 - output_vars[formula.op2.i]
-                    )
+                    lb = formula.op1 - neural_net.layers[-1].bounds["out"]["u"][formula.op2.i]
+                    ub = formula.op1 - neural_net.layers[-1].bounds["out"]["l"][formula.op2.i]
+                    deltas += [model.addVar(lb=lb, ub=ub, vtype=GRB.CONTINUOUS, name=f"delta_{j}")]
+                    model.addConstr(deltas[j] == formula.op1 - output_vars[formula.op2.i])
             lbs += [lb]
             ubs += [ub]
         if isinstance(output_formula, NAryDisjFormula):
@@ -289,9 +250,7 @@ def get_callback_specific(output_formula: Formula):
 
             return callback
 
-    elif isinstance(output_formula, NAryDisjFormula) or isinstance(
-        output_formula, NAryConjFormula
-    ):
+    elif isinstance(output_formula, NAryDisjFormula) or isinstance(output_formula, NAryConjFormula):
 
         def callback(m, where):
             if where == GRB.Callback.MIPNODE:
@@ -313,9 +272,7 @@ def get_callback_specific(output_formula: Formula):
         return None
 
 
-def get_output_constrs(
-    output_formula: Formula, model: Model, output_vars, negate: bool = True
-):
+def get_output_constrs(output_formula: Formula, model: Model, output_vars, negate: bool = True):
     if negate:
         negated_output_formula = NegationFormula(output_formula).to_nnf()
     else:
@@ -335,9 +292,7 @@ def get_constrs(model: Model, formula: Formula, vars: List[Var]):
         return [get_atomic_constr(formula, vars)]
 
     if isinstance(formula, ConjFormula):
-        return get_constrs(model, formula.left, vars) + get_constrs(
-            model, formula.right, vars
-        )
+        return get_constrs(model, formula.left, vars) + get_constrs(model, formula.right, vars)
 
     if isinstance(formula, NAryConjFormula):
         constrs = []
@@ -369,12 +324,9 @@ def get_constrs(model: Model, formula: Formula, vars: List[Var]):
         return constrs
 
     if isinstance(formula, NAryDisjFormula):
-
         clauses = formula.clauses
         split_vars = model.addVars(len(clauses), vtype=GRB.BINARY)
-        clause_vars = [
-            model.addVars(len(vars), lb=-GRB.INFINITY) for _ in range(len(clauses))
-        ]
+        clause_vars = [model.addVars(len(vars), lb=-GRB.INFINITY) for _ in range(len(clauses))]
 
         constr_sets = []
         constrs = []

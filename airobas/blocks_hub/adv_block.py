@@ -1,13 +1,8 @@
 import time
 from typing import Dict, List, Optional
 
-import numpy as np
 import keras.ops as K
-# cleverhans is not compatible with keras 3
-# probably override FGSM and PGD with keras3 compatible implementations
-from cleverhans.tf2.attacks.fast_gradient_method import fast_gradient_method
-from cleverhans.tf2.attacks.projected_gradient_descent import projected_gradient_descent
-
+import numpy as np
 from airobas.blocks_hub.meta_block import MetaBlock
 from airobas.verif_pipeline import (
     BlockVerif,
@@ -16,6 +11,11 @@ from airobas.verif_pipeline import (
     ProblemContainer,
     StatusVerif,
 )
+
+# cleverhans is not compatible with keras 3
+# probably override FGSM and PGD with keras3 compatible implementations
+from cleverhans.tf2.attacks.fast_gradient_method import fast_gradient_method
+from cleverhans.tf2.attacks.projected_gradient_descent import projected_gradient_descent
 
 
 def custom_adv_loss(logits, mask_output, mask_target_up):
@@ -54,18 +54,7 @@ def check_SB_sat(Y_pred, Y_min, Y_max):
     return labels
 
 
-def adv_func_priv(
-    model,
-    X_min,
-    X_max,
-    Y_min,
-    Y_max,
-    loss_fn,
-    fgs=True,
-    target_index=None,
-    preds=False,
-    **kwargs
-):
+def adv_func_priv(model, X_min, X_max, Y_min, Y_max, loss_fn, fgs=True, target_index=None, preds=False, **kwargs):
     """Generate adversarial samples within the stable input bounds (with FGS or PGD)
 
     Args:
@@ -119,9 +108,7 @@ def adv_func_priv(
     # Y_min, Y_max = discard_untarget_outputs_verif(Y_min, Y_max, target_index, model.output_shape[-1])
     labels = check_SB_sat(Y_pred, Y_min, Y_max)
     if preds:
-        return labels, [
-            (X_adv[i, :].numpy(), Y_pred[i, :]) for i in range(X_adv.shape[0])
-        ]  # Y_pred
+        return labels, [(X_adv[i, :].numpy(), Y_pred[i, :]) for i in range(X_adv.shape[0])]  # Y_pred
     else:
         return labels
 
@@ -163,16 +150,7 @@ def get_adv_func(model, index_target, up, fgs=True, preds=False, **kwargs):
             one hot encoding with class 0 for unstable samples (sat)
         """
         return adv_func_priv(
-            model,
-            X_min,
-            X_max,
-            Y_min,
-            Y_max,
-            loss_fn,
-            fgs=fgs,
-            target_index=target_index,
-            preds=preds,
-            **kwargs
+            model, X_min, X_max, Y_min, Y_max, loss_fn, fgs=fgs, target_index=target_index, preds=preds, **kwargs
         )
 
     return adv_
@@ -187,9 +165,7 @@ class CleverhansAdvBlock(BlockVerif):
         attack_up: bool,
         fgs: bool,
     ):
-        super().__init__(
-            problem_container=problem_container, data_container=data_container
-        )
+        super().__init__(problem_container=problem_container, data_container=data_container)
         self.method = get_adv_func(
             self.problem_container.model,
             index_target=index_target,
@@ -202,9 +178,7 @@ class CleverhansAdvBlock(BlockVerif):
     def verif(self, indexes: np.ndarray) -> BlockVerifOutput:
         nb_points = len(indexes)
         output = BlockVerifOutput(
-            status=np.array(
-                [StatusVerif.UNKNOWN for _ in range(nb_points)], dtype=StatusVerif
-            ),
+            status=np.array([StatusVerif.UNKNOWN for _ in range(nb_points)], dtype=StatusVerif),
             inputs=[None for _ in range(nb_points)],
             outputs=[None for _ in range(nb_points)],
             build_time=0,
@@ -246,7 +220,7 @@ class CleverHansMultiIndexAdvBlock(MetaBlock):
         if list_params_adv_block is None:
             list_params_adv_block = [
                 {"index_target": i, "attack_up": b, "fgs": c}
-                for c in [True]#,False]
+                for c in [True]  # ,False]
                 for i in range(data_container.output_points.shape[1])
                 for b in [True, False]
             ]

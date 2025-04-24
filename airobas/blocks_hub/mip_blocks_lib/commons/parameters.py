@@ -21,16 +21,10 @@ class ParamsBoundComputationEnum(Enum):
 
 
 class ParamsBoundComputation:
-    def __init__(
-        self,
-        params_bound_computation_enum: Optional[ParamsBoundComputationEnum] = None,
-        **kwargs
-    ):
+    def __init__(self, params_bound_computation_enum: Optional[ParamsBoundComputationEnum] = None, **kwargs):
         self.params_bound_computation_enum = params_bound_computation_enum
         self.params = kwargs
 
     @staticmethod
     def default():
-        return ParamsBoundComputation(
-            params_bound_computation_enum=ParamsBoundComputationEnum.SIA
-        )
+        return ParamsBoundComputation(params_bound_computation_enum=ParamsBoundComputationEnum.SIA)

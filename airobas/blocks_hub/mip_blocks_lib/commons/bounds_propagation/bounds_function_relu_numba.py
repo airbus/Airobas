@@ -1,8 +1,6 @@
 from typing import Dict, Optional
 
 import numpy as np
-from numba import njit
-
 from airobas.blocks_hub.mip_blocks_lib.commons.layers import Layer, Relu
 from airobas.blocks_hub.mip_blocks_lib.commons.linearfunctions import (
     LinearFunctions,
@@ -13,6 +11,7 @@ from airobas.blocks_hub.mip_blocks_lib.commons.linearfunctions import (
     get_upper_relu_relax_numba,
 )
 from airobas.blocks_hub.mip_blocks_lib.commons.parameters import Bounds
+from numba import njit
 
 
 def compute_bounds_numba(
@@ -104,9 +103,7 @@ def compute_error(current_layer: Layer, previous_layer: Layer):
 
 
 # Constraint propagation
-def compute_bounds_interval_arithmetic(
-    current_layer: Layer, previous_layer: Layer, is_relu: bool
-):
+def compute_bounds_interval_arithmetic(current_layer: Layer, previous_layer: Layer, is_relu: bool):
     current_layer.bounds["in"] = compute_in_interval_arithmetic(
         weights_current_layer_minus=current_layer.weights_minus,
         weights_current_layer_plus=current_layer.weights_plus,
@@ -139,18 +136,14 @@ def compute_in_interval_arithmetic(
 
     lower = np.array(
         [
-            weights_plus[i].dot(input_lb)
-            + weights_minus[i].dot(input_ub)
-            + bias_current_mayer[i]
+            weights_plus[i].dot(input_lb) + weights_minus[i].dot(input_ub) + bias_current_mayer[i]
             for i in range(output_shape)
         ]
     )
 
     upper = np.array(
         [
-            weights_plus[i].dot(input_ub)
-            + weights_minus[i].dot(input_lb)
-            + bias_current_mayer[i]
+            weights_plus[i].dot(input_ub) + weights_minus[i].dot(input_lb) + bias_current_mayer[i]
             for i in range(output_shape)
         ]
     )
@@ -158,9 +151,7 @@ def compute_in_interval_arithmetic(
 
 
 @njit
-def compute_out_interval_arithmetic(
-    output_shape: int, lower_bounds: np.ndarray, upper_bounds: np.ndarray
-):
+def compute_out_interval_arithmetic(output_shape: int, lower_bounds: np.ndarray, upper_bounds: np.ndarray):
     lower = np.maximum(lower_bounds, 0)
     upper = np.maximum(upper_bounds, 0)
     return {"l": lower, "u": upper}
@@ -221,18 +212,10 @@ def compute_bounds_sia(
         current_layer_weights_minus=current_layer.weights_minus,
         current_layer_weights_plus=current_layer.weights_plus,
         current_layer_bias=current_layer.bias,
-        previous_layer_lower_equation_matrix=previous_layer.bound_equations["out"][
-            "l"
-        ].matrix,
-        previous_layer_lower_equation_offset=previous_layer.bound_equations["out"][
-            "l"
-        ].offset,
-        previous_layer_upper_equation_matrix=previous_layer.bound_equations["out"][
-            "u"
-        ].matrix,
-        previous_layer_upper_equation_offset=previous_layer.bound_equations["out"][
-            "u"
-        ].offset,
+        previous_layer_lower_equation_matrix=previous_layer.bound_equations["out"]["l"].matrix,
+        previous_layer_lower_equation_offset=previous_layer.bound_equations["out"]["l"].offset,
+        previous_layer_upper_equation_matrix=previous_layer.bound_equations["out"]["u"].matrix,
+        previous_layer_upper_equation_offset=previous_layer.bound_equations["out"]["u"].offset,
     )
     current_layer.bound_equations["in"] = {
         "l": LinearFunctions(l_coeffs, l_const),
@@ -287,12 +270,8 @@ def compute_bounds_sia(
 
     # make sure the bounds are not below zero
     if is_relu:
-        current_layer.bounds["out"]["l"] = np.maximum(
-            current_layer.bounds["out"]["l"], 0
-        )
-        current_layer.bounds["out"]["u"] = np.maximum(
-            current_layer.bounds["out"]["u"], 0
-        )
+        current_layer.bounds["out"]["l"] = np.maximum(current_layer.bounds["out"]["l"], 0)
+        current_layer.bounds["out"]["u"] = np.maximum(current_layer.bounds["out"]["u"], 0)
 
 
 @njit
@@ -317,12 +296,8 @@ def compute_in_bound_eqs(
     # get constants for the input bound equations
     p_l_const = previous_layer_lower_equation_offset
     p_u_const = previous_layer_upper_equation_offset
-    l_const = (
-        weights_plus.dot(p_l_const) + weights_minus.dot(p_u_const) + current_layer_bias
-    )
-    u_const = (
-        weights_plus.dot(p_u_const) + weights_minus.dot(p_l_const) + current_layer_bias
-    )
+    l_const = weights_plus.dot(p_l_const) + weights_minus.dot(p_u_const) + current_layer_bias
+    u_const = weights_plus.dot(p_u_const) + weights_minus.dot(p_l_const) + current_layer_bias
     # return input bound equations
     return l_coeffs, l_const, u_coeffs, u_const
 
@@ -368,18 +343,10 @@ def compute_runtime_bounds_sia(
         current_layer_weights_minus=current_layer.weights_minus,
         current_layer_weights_plus=current_layer.weights_plus,
         current_layer_bias=current_layer.bias,
-        previous_layer_lower_equation_matrix=previous_layer.rnt_bound_equations["out"][
-            "l"
-        ].matrix,
-        previous_layer_lower_equation_offset=previous_layer.rnt_bound_equations["out"][
-            "l"
-        ].offset,
-        previous_layer_upper_equation_matrix=previous_layer.rnt_bound_equations["out"][
-            "u"
-        ].matrix,
-        previous_layer_upper_equation_offset=previous_layer.rnt_bound_equations["out"][
-            "u"
-        ].offset,
+        previous_layer_lower_equation_matrix=previous_layer.rnt_bound_equations["out"]["l"].matrix,
+        previous_layer_lower_equation_offset=previous_layer.rnt_bound_equations["out"]["l"].offset,
+        previous_layer_upper_equation_matrix=previous_layer.rnt_bound_equations["out"]["u"].matrix,
+        previous_layer_upper_equation_offset=previous_layer.rnt_bound_equations["out"]["u"].offset,
     )
     current_layer.rnt_bound_equations["in"] = {
         "l": LinearFunctions(l_coeffs, l_const),
@@ -430,21 +397,15 @@ def compute_runtime_bounds_sia(
             input_upper=input_upper,
         )
     else:
-        current_layer.rnt_bound_equations["out"] = current_layer.rnt_bound_equations[
-            "in"
-        ]
+        current_layer.rnt_bound_equations["out"] = current_layer.rnt_bound_equations["in"]
         # set concrete output bounds
         current_layer.rnt_bounds["out"]["l"] = current_layer.rnt_bounds["in"]["l"]
         current_layer.rnt_bounds["out"]["u"] = current_layer.rnt_bounds["in"]["l"]
 
     if is_relu:
         # make sure the bounds are not below zero
-        current_layer.rnt_bounds["out"]["l"] = np.maximum(
-            current_layer.rnt_bounds["out"]["l"], 0
-        )
-        current_layer.rnt_bounds["out"]["u"] = np.maximum(
-            current_layer.rnt_bounds["out"]["u"], 0
-        )
+        current_layer.rnt_bounds["out"]["l"] = np.maximum(current_layer.rnt_bounds["out"]["l"], 0)
+        current_layer.rnt_bounds["out"]["u"] = np.maximum(current_layer.rnt_bounds["out"]["u"], 0)
 
 
 def compute_runtime_in_bound_eqs(

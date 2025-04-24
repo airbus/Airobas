@@ -14,7 +14,8 @@ except ImportError as e:
     print(e)
 import logging
 
-from tensorflow.python.keras.models import Model  # , Sequential, load_model
+#from tensorflow.python.keras.models import Model  # , Sequential, load_model
+from keras.models import Model
 
 from airobas.blocks_hub.mip_blocks_lib.commons.bounds_propagation.bounds_computation_interface import (
     BoundComputation

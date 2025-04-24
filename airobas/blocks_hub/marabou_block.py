@@ -5,9 +5,10 @@ from time import perf_counter
 import numpy as np
 from maraboupy import Marabou, MarabouCore
 from maraboupy.MarabouNetwork import MarabouNetwork  # (pip install maraboupy)
-from tensorflow.keras.layers import Activation, Dense
-from tensorflow.keras.models import Sequential
-from keras.models import clone_model
+#from tensorflow.keras.layers import Activation, Dense
+#from tensorflow.keras.models import Sequential
+from keras.layers import Activation, Dense
+from keras.models import Sequential
 from airobas.verif_pipeline import (
     BlockVerif,
     BlockVerifOutput,
@@ -29,7 +30,6 @@ def separate_activations(model: Sequential):
     """
     l = []
     new_model = Sequential()
-    #copy_model = clone_model(model)
     for layer in model.layers:
         if isinstance(layer, Dense):
             # Add a new Dense layer without activation

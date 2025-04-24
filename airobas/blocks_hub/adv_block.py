@@ -2,8 +2,9 @@ import time
 from typing import Dict, List, Optional
 
 import numpy as np
-import tensorflow as tf
-import tensorflow.keras.backend as K
+import keras.ops as K
+# cleverhans is not compatible with keras 3
+# probably override FGSM and PGD with keras3 compatible implementations
 from cleverhans.tf2.attacks.fast_gradient_method import fast_gradient_method
 from cleverhans.tf2.attacks.projected_gradient_descent import projected_gradient_descent
 
@@ -88,7 +89,7 @@ def adv_func_priv(
         # run fast gradient sign
         X_adv = fast_gradient_method(
             model,
-            tf.constant(X),
+            K.convert_to_tensor(X),
             eps=eps,
             norm=np.inf,
             loss_fn=loss_fn,
@@ -102,7 +103,7 @@ def adv_func_priv(
         nb_iter = kwargs.get("nb_iter", 400)
         X_adv = projected_gradient_descent(
             model,
-            tf.constant(X),
+            K.convert_to_tensor(X),
             eps=eps,
             eps_iter=eps_iter,
             nb_iter=nb_iter,

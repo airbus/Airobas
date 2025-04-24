@@ -14,12 +14,12 @@ requires-python = ">=3.9"
 dependencies =[
     "keras>=3",
     "cleverhans",
-    "decomon>0.1.1",
+    "decomon@git+https://github.com/airbus/decomon@keras3",
     "gurobi-machinelearning",
-    "maraboupy>1.0.0",
+    "maraboupy",
     "onnx",
     "numba",
-    "numpy >=1.23",
+    "numpy <=1.26",
 ]
 license = {text = "MIT"}
 dynamic = ["version"]

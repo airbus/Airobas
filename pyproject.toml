@@ -2,31 +2,26 @@
 requires = ["setuptools>=64", "setuptools_scm"]
 build-backend = "setuptools.build_meta"
 
+
 [project]
 name = "airobas"
 description = "AI ROBustness ASsessment"
 readme = "README.md"
 authors = [
-    {email ="audrey.galametz@airbus.com"},
+    {email ="melanie.ducoffe@airbus.com"},
 ]
 requires-python = ">=3.9"
 dependencies =[
-    "pandas",
-    "keras==2.15.0",
-    "scikit-learn",
-    "smt",
-    "scipy",
+    "keras>=3",
     "cleverhans",
-    "decomon==0.1.1",
+    "decomon>0.1.1",
     "gurobi-machinelearning",
-    "maraboupy==1.0.0",
+    "maraboupy>1.0.0",
     "onnx",
-    "ipywidgets",
     "numba",
-    "matplotlib",
     "numpy >=1.23",
 ]
-
+license = {text = "MIT"}
 dynamic = ["version"]
 
 [project.urls]
@@ -35,6 +30,7 @@ repository = "https://github.com/airbus/Airobas"
 
 [project.optional-dependencies]
 dev = ["tox>=4.6.4"]
+
 
 [tool.setuptools.packages.find]
 where = ["."]
@@ -46,8 +42,6 @@ include = ["airobas*"]
 testpaths = ["tests"]
 addopts = [
     "--import-mode=importlib",
-    "--ignore=tests/lirpa_comparison",
-    "--ignore=tests/test_deel_lip.py",
 ]
 
 [tool.black]

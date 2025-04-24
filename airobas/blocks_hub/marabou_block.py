@@ -15,7 +15,7 @@ from airobas.verif_pipeline import (
 # from tensorflow.keras.models import Sequential
 from keras.layers import Activation, Dense
 from keras.models import Sequential
-from maraboupy import Marabou, MarabouCore
+from maraboupy import Marabou, MarabouCore, MarabouUtils
 from maraboupy.MarabouNetwork import MarabouNetwork  # (pip install maraboupy)
 
 logger = logging.getLogger(__name__)
@@ -187,11 +187,11 @@ def solve_stability_property(network: MarabouSequential, x_min, x_max, y_min, y_
     for i in range(network.get_output_dim()):
         if np.isinf(y_min[i]) or np.isinf(y_max[i]):
             continue
-        equ_l = MarabouCore.Equation(MarabouCore.Equation.LE)  # greater or equal >= scalar
+        equ_l = MarabouUtils.Equation(MarabouCore.Equation.LE)  # greater or equal >= scalar
         equ_l.addAddend(1, network.outputVars[0][0][i])
         equ_l.setScalar(y_min[i])
         # equ_l : f(x)[i]< Y_min[i]
-        equ_u = MarabouCore.Equation(MarabouCore.Equation.GE)  # greater or equal >= scalar
+        equ_u = MarabouUtils.Equation(MarabouCore.Equation.GE)  # greater or equal >= scalar
         equ_u.addAddend(1, network.outputVars[0][0][i])
         equ_u.setScalar(y_max[i])
         # equ_u : f(x)[i]> Y_max[i]

@@ -1,7 +1,6 @@
 from typing import Dict, Optional
 
 import numpy as np
-
 from airobas.blocks_hub.mip_blocks_lib.commons.layers import Layer
 from airobas.blocks_hub.mip_blocks_lib.commons.linearfunctions import LinearFunctions
 from airobas.blocks_hub.mip_blocks_lib.commons.parameters import Bounds
@@ -25,13 +24,9 @@ def compute_bounds(
                 calculation of bounds"""
                 )
             else:
-                compute_runtime_bounds_interval_arithmetic(
-                    current_layer, previous_layer, binary_vars
-                )
+                compute_runtime_bounds_interval_arithmetic(current_layer, previous_layer, binary_vars)
         else:
-            compute_bounds_interval_arithmetic(
-                current_layer=current_layer, previous_layer=previous_layer
-            )
+            compute_bounds_interval_arithmetic(current_layer=current_layer, previous_layer=previous_layer)
     elif method == Bounds.SYMBOLIC_INT_ARITHMETIC:
         if len(input_bounds) == 0:
             raise Exception(
@@ -97,47 +92,33 @@ def compute_bounds_interval_arithmetic(current_layer: Layer, previous_layer: Lay
     )
 
 
-def compute_in_interval_arithmetic(
-    current_layer: Layer, input_lb: np.ndarray, input_ub: np.ndarray
-):
-    weights_plus = np.maximum(
-        current_layer.weights, np.zeros(current_layer.weights.shape)
-    )
-    weights_minus = np.minimum(
-        current_layer.weights, np.zeros(current_layer.weights.shape)
-    )
+def compute_in_interval_arithmetic(current_layer: Layer, input_lb: np.ndarray, input_ub: np.ndarray):
+    weights_plus = np.maximum(current_layer.weights, np.zeros(current_layer.weights.shape))
+    weights_minus = np.minimum(current_layer.weights, np.zeros(current_layer.weights.shape))
 
     lower = np.array(
         [
-            weights_plus[i].dot(input_lb)
-            + weights_minus[i].dot(input_ub)
-            + current_layer.bias[i]
+            weights_plus[i].dot(input_lb) + weights_minus[i].dot(input_ub) + current_layer.bias[i]
             for i in range(current_layer.output_shape)
         ]
     )
 
     upper = np.array(
         [
-            weights_plus[i].dot(input_ub)
-            + weights_minus[i].dot(input_lb)
-            + current_layer.bias[i]
+            weights_plus[i].dot(input_ub) + weights_minus[i].dot(input_lb) + current_layer.bias[i]
             for i in range(current_layer.output_shape)
         ]
     )
     return {"l": lower, "u": upper}
 
 
-def compute_out_interval_arithmetic(
-    current_layer: Layer, in_bounds: Dict[str, np.ndarray]
-):
+def compute_out_interval_arithmetic(current_layer: Layer, in_bounds: Dict[str, np.ndarray]):
     lower = np.maximum(in_bounds["l"], np.zeros(current_layer.output_shape))
     upper = np.maximum(in_bounds["u"], np.zeros(current_layer.output_shape))
     return {"l": lower, "u": upper}
 
 
-def compute_runtime_bounds_interval_arithmetic(
-    current_layer: Layer, previous_layer: Layer, binary_vars
-):
+def compute_runtime_bounds_interval_arithmetic(current_layer: Layer, previous_layer: Layer, binary_vars):
     """
     Bounds  - Interval Arithmetic - Runtime computation
     """
@@ -151,9 +132,7 @@ def compute_runtime_bounds_interval_arithmetic(
     )
 
 
-def compute_runtime_out_interval_arithmetic(
-    current_layer: Layer, in_bounds: Dict[str, np.ndarray], binary_vars
-):
+def compute_runtime_out_interval_arithmetic(current_layer: Layer, in_bounds: Dict[str, np.ndarray], binary_vars):
     bounds = compute_out_interval_arithmetic(current_layer, in_bounds)
     bounds["l"][(binary_vars == 0)] = 0
     bounds["u"][(binary_vars == 0)] = 0
@@ -163,9 +142,7 @@ def compute_runtime_out_interval_arithmetic(
 #
 # Bounds - Symbolic Interval Arithmetic - Pre-computation
 #
-def compute_bounds_sia(
-    current_layer: Layer, previous_layer: Layer, input_bounds: np.ndarray
-):
+def compute_bounds_sia(current_layer: Layer, previous_layer: Layer, input_bounds: np.ndarray):
     # set input bounds equations
     current_layer.bound_equations["in"] = compute_in_bound_eqs(
         current_layer=current_layer,
@@ -173,24 +150,14 @@ def compute_bounds_sia(
         p_up_eq=previous_layer.bound_equations["out"]["u"],
     )
     # set concrete input bounds
-    current_layer.bounds["in"]["l"] = current_layer.bound_equations["in"][
-        "l"
-    ].compute_min_values(input_bounds)
-    current_layer.bounds["in"]["u"] = current_layer.bound_equations["in"][
-        "u"
-    ].compute_max_values(input_bounds)
+    current_layer.bounds["in"]["l"] = current_layer.bound_equations["in"]["l"].compute_min_values(input_bounds)
+    current_layer.bounds["in"]["u"] = current_layer.bound_equations["in"]["u"].compute_max_values(input_bounds)
 
     # set output bounds equatuons
-    current_layer.bound_equations["out"] = compute_out_bound_eqs(
-        current_layer.bound_equations["in"], input_bounds
-    )
+    current_layer.bound_equations["out"] = compute_out_bound_eqs(current_layer.bound_equations["in"], input_bounds)
     # set concrete output bounds
-    current_layer.bounds["out"]["l"] = current_layer.bound_equations["out"][
-        "l"
-    ].compute_min_values(input_bounds)
-    current_layer.bounds["out"]["u"] = current_layer.bound_equations["out"][
-        "u"
-    ].compute_max_values(input_bounds)
+    current_layer.bounds["out"]["l"] = current_layer.bound_equations["out"]["l"].compute_min_values(input_bounds)
+    current_layer.bounds["out"]["u"] = current_layer.bound_equations["out"]["u"].compute_max_values(input_bounds)
     # make sure the bounds are not below zero
     current_layer.bounds["out"]["l"] = np.maximum(
         current_layer.bounds["out"]["l"], np.zeros(current_layer.output_shape)
@@ -200,15 +167,9 @@ def compute_bounds_sia(
     )
 
 
-def compute_in_bound_eqs(
-    current_layer: Layer, p_low_eq: LinearFunctions, p_up_eq: LinearFunctions
-):
-    weights_plus = np.maximum(
-        current_layer.weights, np.zeros(current_layer.weights.shape)
-    )
-    weights_minus = np.minimum(
-        current_layer.weights, np.zeros(current_layer.weights.shape)
-    )
+def compute_in_bound_eqs(current_layer: Layer, p_low_eq: LinearFunctions, p_up_eq: LinearFunctions):
+    weights_plus = np.maximum(current_layer.weights, np.zeros(current_layer.weights.shape))
+    weights_minus = np.minimum(current_layer.weights, np.zeros(current_layer.weights.shape))
 
     # get coefficients for the input bound equations
     p_l_coeffs = p_low_eq.matrix
@@ -219,12 +180,8 @@ def compute_in_bound_eqs(
     # get constants for the input bound equations
     p_l_const = p_low_eq.offset
     p_u_const = p_up_eq.offset
-    l_const = (
-        weights_plus.dot(p_l_const) + weights_minus.dot(p_u_const) + current_layer.bias
-    )
-    u_const = (
-        weights_plus.dot(p_u_const) + weights_minus.dot(p_l_const) + current_layer.bias
-    )
+    l_const = weights_plus.dot(p_l_const) + weights_minus.dot(p_u_const) + current_layer.bias
+    u_const = weights_plus.dot(p_u_const) + weights_minus.dot(p_l_const) + current_layer.bias
     # return input bound equations
     return {
         "l": LinearFunctions(l_coeffs, l_const),
@@ -240,9 +197,7 @@ def compute_out_bound_eqs(in_eqs: Dict[str, LinearFunctions], input_bounds: np.n
     }
 
 
-def compute_runtime_bounds_sia(
-    current_layer: Layer, previous_layer: Layer, input_bounds: np.ndarray, binary_vars
-):
+def compute_runtime_bounds_sia(current_layer: Layer, previous_layer: Layer, input_bounds: np.ndarray, binary_vars):
     # set input runtime bounds equations
     current_layer.rnt_bound_equations["in"] = compute_runtime_in_bound_eqs(
         current_layer,
@@ -250,24 +205,20 @@ def compute_runtime_bounds_sia(
         previous_layer.rnt_bound_equations["out"]["u"],
     )
     # set concrete input runtime bounds
-    current_layer.rnt_bounds["in"]["l"] = current_layer.rnt_bound_equations["in"][
-        "l"
-    ].compute_min_values(input_bounds)
-    current_layer.rnt_bounds["in"]["u"] = current_layer.rnt_bound_equations["in"][
-        "u"
-    ].compute_max_values(input_bounds)
+    current_layer.rnt_bounds["in"]["l"] = current_layer.rnt_bound_equations["in"]["l"].compute_min_values(input_bounds)
+    current_layer.rnt_bounds["in"]["u"] = current_layer.rnt_bound_equations["in"]["u"].compute_max_values(input_bounds)
 
     # set output bounds equations
     current_layer.rnt_bound_equations["out"] = compute_runtime_out_bound_eqs(
         current_layer.rnt_bound_equations["in"], input_bounds, binary_vars
     )
     # set concrete output bounds
-    current_layer.rnt_bounds["out"]["l"] = current_layer.rnt_bound_equations["out"][
-        "l"
-    ].compute_min_values(input_bounds)
-    current_layer.rnt_bounds["out"]["u"] = current_layer.rnt_bound_equations["out"][
-        "u"
-    ].compute_max_values(input_bounds)
+    current_layer.rnt_bounds["out"]["l"] = current_layer.rnt_bound_equations["out"]["l"].compute_min_values(
+        input_bounds
+    )
+    current_layer.rnt_bounds["out"]["u"] = current_layer.rnt_bound_equations["out"]["u"].compute_max_values(
+        input_bounds
+    )
     # make sure the bounds are not below zero
     current_layer.rnt_bounds["out"]["l"] = np.maximum(
         current_layer.rnt_bounds["out"]["l"], np.zeros(current_layer.output_shape)
@@ -277,15 +228,11 @@ def compute_runtime_bounds_sia(
     )
 
 
-def compute_runtime_in_bound_eqs(
-    current_layer: Layer, p_low_eq: LinearFunctions, p_up_eq: LinearFunctions
-):
+def compute_runtime_in_bound_eqs(current_layer: Layer, p_low_eq: LinearFunctions, p_up_eq: LinearFunctions):
     return compute_in_bound_eqs(current_layer, p_low_eq, p_up_eq)
 
 
-def compute_runtime_out_bound_eqs(
-    in_eqs: Dict[str, LinearFunctions], input_bounds: np.ndarray, binary_vars
-):
+def compute_runtime_out_bound_eqs(in_eqs: Dict[str, LinearFunctions], input_bounds: np.ndarray, binary_vars):
     # set out bound equations
     eqs = compute_out_bound_eqs(in_eqs, input_bounds)
     # set bound functions to zero for inactive nodes

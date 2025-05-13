@@ -18,8 +18,6 @@ def create_object_bounds(params: ParamsBoundComputation, neural_network):
     if params.params_bound_computation_enum == ParamsBoundComputationEnum.SIA:
         return BoundComputationSymbolicArithmetic(neural_network)
     if params.params_bound_computation_enum == ParamsBoundComputationEnum.DECOMON:
-        return BoundsComputationDecomon(
-            neural_network, convert_method=ConvertMethod.CROWN
-        )
+        return BoundsComputationDecomon(neural_network, convert_method=ConvertMethod.CROWN)
     if params.params_bound_computation_enum == ParamsBoundComputationEnum.MILP:
         return BoundComputationSolverMilp(neural_network, **params.params)

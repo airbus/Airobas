@@ -6,6 +6,7 @@ from airobas.blocks_hub.mip_blocks_lib.commons.bounds_propagation.linear_propaga
 from airobas.blocks_hub.mip_blocks_lib.commons.neural_network import NeuralNetwork
 from airobas.blocks_hub.mip_blocks_lib.commons.parameters import Bounds
 
+
 def default_propagation(neural_network: NeuralNetwork):
     compute_bounds_linear_propagation(
         lmodel=neural_network,

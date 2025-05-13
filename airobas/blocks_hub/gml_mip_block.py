@@ -4,9 +4,9 @@ from typing import Optional
 
 import gurobipy as gp
 import numpy as np
-from gurobi_ml import add_predictor_constr
-
-from airobas.blocks_hub.mip_blocks_lib.commons.bounds_propagation.bounds_computation_utils import create_object_bounds
+from airobas.blocks_hub.mip_blocks_lib.commons.bounds_propagation.bounds_computation_utils import (
+    create_object_bounds,
+)
 from airobas.blocks_hub.mip_blocks_lib.commons.formula import (
     GT,
     LT,
@@ -22,7 +22,10 @@ from airobas.blocks_hub.mip_blocks_lib.commons.parameters import (
     ParamsBoundComputation,
     ParamsBoundComputationEnum,
 )
-from airobas.blocks_hub.mip_blocks_lib.commons.utilities.evaluate import evaluate, random_input
+from airobas.blocks_hub.mip_blocks_lib.commons.utilities.evaluate import (
+    evaluate,
+    random_input,
+)
 from airobas.blocks_hub.mip_blocks_lib.linear.verification_formula.verification_constraints import (
     get_output_constrs,
 )
@@ -33,6 +36,7 @@ from airobas.verif_pipeline import (
     ProblemContainer,
     StatusVerif,
 )
+from gurobi_ml import add_predictor_constr
 
 logger = logging.getLogger(__name__)
 
@@ -44,9 +48,7 @@ class GMLBrick(BlockVerif):
         data_container: DataContainer,
         **kwargs,
     ):
-        super().__init__(
-            problem_container=problem_container, data_container=data_container
-        )
+        super().__init__(problem_container=problem_container, data_container=data_container)
         self.model = problem_container.model
         self.lp_model: gp.Model = None
         self.x = None
@@ -59,23 +61,17 @@ class GMLBrick(BlockVerif):
         do_bounds_computation = self.options.get("do_bounds_computation", True)
         do_warm_start = self.options.get("do_warm_start", False)
         # Recompute bounds using interval arithmetic or decomon.
-        spec = InputBoundsNeuralNetwork(
-            input_lower_bounds=x_min, input_upper_bounds=x_max
-        )
+        spec = InputBoundsNeuralNetwork(input_lower_bounds=x_min, input_upper_bounds=x_max)
         if do_bounds_computation or do_warm_start:
             params_bound = ParamsBoundComputation(ParamsBoundComputationEnum.SIA)
             if self.neural_net.input is None:
                 self.neural_net.parse_keras(self.model, spec=spec)
                 if do_bounds_computation:
-                    create_object_bounds(
-                        params_bound, self.neural_net
-                    ).update_bounds_net(self.neural_net)
+                    create_object_bounds(params_bound, self.neural_net).update_bounds_net(self.neural_net)
             else:
                 self.neural_net = self.neural_net.clone(spec=spec)
                 if do_bounds_computation:
-                    create_object_bounds(
-                        params_bound, self.neural_net
-                    ).update_bounds_net(self.neural_net)
+                    create_object_bounds(params_bound, self.neural_net).update_bounds_net(self.neural_net)
         m = gp.Model()
         m.setParam("OutputFlag", 0)  # remove huge log by default
         if "OutputFlag" in self.options:
@@ -128,25 +124,17 @@ class GMLBrick(BlockVerif):
         for index in range(nb_points):
             nb += 1
             t1 = time.perf_counter()
-            self.init_gml_model(
-                x_min=x_min[index], x_max=x_max[index], y_min=y_min[index]
-            )
+            self.init_gml_model(x_min=x_min[index], x_max=x_max[index], y_min=y_min[index])
             formula = NAryConjFormula(
                 [
-                    VarConstConstraint(
-                        StateCoordinate(i), LT, y_max[index, i] + 10**-6
-                    )
+                    VarConstConstraint(StateCoordinate(i), LT, y_max[index, i] + 10**-6)
                     for i in range(y_max.shape[1])
-                    if self.neural_net.layers[-1].bounds["out"]["u"][i]
-                    > y_max[index, i]
+                    if self.neural_net.layers[-1].bounds["out"]["u"][i] > y_max[index, i]
                 ]
                 + [
-                    VarConstConstraint(
-                        StateCoordinate(i), GT, y_min[index, i] - 10**-6
-                    )
+                    VarConstConstraint(StateCoordinate(i), GT, y_min[index, i] - 10**-6)
                     for i in range(y_max.shape[1])
-                    if self.neural_net.layers[-1].bounds["out"]["l"][i]
-                    < y_min[index, i]
+                    if self.neural_net.layers[-1].bounds["out"]["l"][i] < y_min[index, i]
                 ]
             )
             if len(formula.clauses) == 0:
@@ -156,9 +144,7 @@ class GMLBrick(BlockVerif):
                 output.verif_time_per_sample[index] = 0
             else:
                 # Adding the output constraint to the model.
-                get_output_constrs(
-                    formula, model=self.lp_model, output_vars=self.y, negate=True
-                )
+                get_output_constrs(formula, model=self.lp_model, output_vars=self.y, negate=True)
                 t2 = time.perf_counter()
                 self.lp_model.optimize()
                 t3 = time.perf_counter()
@@ -167,21 +153,15 @@ class GMLBrick(BlockVerif):
                 elif self.lp_model.ObjVal >= 0.0:
                     output.status[index] = StatusVerif.VIOLATED
                     counter_example = [x.X for x in self.x]
-                    prediction = self.problem_container.model.predict(
-                        [counter_example], verbose=0
-                    )[0]
+                    prediction = self.problem_container.model.predict([counter_example], verbose=0)[0]
                     output.inputs[index] = np.array(counter_example)
                     output.outputs[index] = prediction
                 elif self.lp_model.Status in {gp.GRB.TIME_LIMIT, gp.GRB.INTERRUPTED}:
                     output.status[index] = StatusVerif.TIMEOUT
                 output.init_time_per_sample[index] = t2 - t1
                 output.verif_time_per_sample[index] = t3 - t2
-            logger.info(
-                f"Current sat (%) {np.sum(output.status == StatusVerif.VERIFIED) / nb_points * 100}"
-            )
-            logger.info(
-                f"Current unsat (%) {np.sum(output.status == StatusVerif.VIOLATED) / nb_points * 100}"
-            )
+            logger.info(f"Current sat (%) {np.sum(output.status == StatusVerif.VERIFIED) / nb_points * 100}")
+            logger.info(f"Current unsat (%) {np.sum(output.status == StatusVerif.VIOLATED) / nb_points * 100}")
 
         return output
 

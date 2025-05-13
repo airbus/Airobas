@@ -1,9 +1,8 @@
 import time
 
 import numpy as np
-from decomon.models import clone
-
 from airobas.verif_pipeline import BlockVerif, BlockVerifOutput, StatusVerif
+from decomon.models import clone
 
 
 def check_SB_unsat(y_pred_min, y_pred_max, y_min, y_max):
@@ -42,9 +41,7 @@ class DecomonBlock(BlockVerif):
     def verif(self, indexes: np.ndarray) -> BlockVerifOutput:
         nb_points = len(indexes)
         output = BlockVerifOutput(
-            status=np.array(
-                [StatusVerif.UNKNOWN for i in range(nb_points)], dtype=StatusVerif
-            ),
+            status=np.array([StatusVerif.UNKNOWN for i in range(nb_points)], dtype=StatusVerif),
             inputs=[None for i in range(nb_points)],
             outputs=[None for i in range(nb_points)],
             build_time=0,
@@ -67,9 +64,7 @@ class DecomonBlock(BlockVerif):
         )
         t3 = time.perf_counter()
         indexes = np.nonzero(labels[:, 1])
-        output.status[
-            indexes
-        ] = StatusVerif.VERIFIED  # this method only conclude on "robust" points
+        output.status[indexes] = StatusVerif.VERIFIED  # this method only conclude on "robust" points
         output.init_time_per_sample[indexes] = t2 - t1
         output.verif_time_per_sample[indexes] = t3 - t2
         return output

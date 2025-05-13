@@ -50,10 +50,8 @@ def compute_min_max_values_numba(
     weights_plus = np.maximum(matrix, np.zeros(matrix.shape))
     weights_minus = np.minimum(matrix, np.zeros(matrix.shape))
     return (
-        compute_lower_numba(weights_minus, weights_plus, input_lower, input_upper)
-        + offset,
-        compute_upper_numba(weights_minus, weights_plus, input_lower, input_upper)
-        + offset,
+        compute_lower_numba(weights_minus, weights_plus, input_lower, input_upper) + offset,
+        compute_upper_numba(weights_minus, weights_plus, input_lower, input_upper) + offset,
     )
 
 
@@ -66,10 +64,7 @@ def compute_max_values_numba(
 ):
     weights_plus = np.maximum(matrix, np.zeros(matrix.shape))
     weights_minus = np.minimum(matrix, np.zeros(matrix.shape))
-    return (
-        compute_upper_numba(weights_minus, weights_plus, input_lower, input_upper)
-        + offset
-    )
+    return compute_upper_numba(weights_minus, weights_plus, input_lower, input_upper) + offset
 
 
 @njit
@@ -81,10 +76,7 @@ def compute_min_values_numba(
 ):
     weights_plus = np.maximum(matrix, np.zeros(matrix.shape))
     weights_minus = np.minimum(matrix, np.zeros(matrix.shape))
-    return (
-        compute_lower_numba(weights_minus, weights_plus, input_lower, input_upper)
-        + offset
-    )
+    return compute_lower_numba(weights_minus, weights_plus, input_lower, input_upper) + offset
 
 
 @njit
@@ -96,12 +88,8 @@ def get_lower_relu_relax_numba(
     input_upper: np.ndarray,
 ):
     # get lower and upper bounds for the bound equation
-    lower = compute_min_values_numba(
-        matrix=matrix, offset=offset, input_lower=input_lower, input_upper=input_upper
-    )
-    upper = compute_max_values_numba(
-        matrix=matrix, offset=offset, input_lower=input_lower, input_upper=input_upper
-    )
+    lower = compute_min_values_numba(matrix=matrix, offset=offset, input_lower=input_lower, input_upper=input_upper)
+    upper = compute_max_values_numba(matrix=matrix, offset=offset, input_lower=input_lower, input_upper=input_upper)
     # matrix and offset for the relaxation
     # compute the coefficients of the linear approximation of out
     # bound equations
@@ -147,12 +135,8 @@ def get_upper_relu_relax_numba(
     input_upper: np.ndarray,
 ):
     # get lower and upper bounds for the bound equation
-    lower = compute_min_values_numba(
-        matrix=matrix, offset=offset, input_lower=input_lower, input_upper=input_upper
-    )
-    upper = compute_max_values_numba(
-        matrix=matrix, offset=offset, input_lower=input_lower, input_upper=input_upper
-    )
+    lower = compute_min_values_numba(matrix=matrix, offset=offset, input_lower=input_lower, input_upper=input_upper)
+    upper = compute_max_values_numba(matrix=matrix, offset=offset, input_lower=input_lower, input_upper=input_upper)
     # matrix and offset for the relaxation
     matrix = matrix
     offset = offset
@@ -208,10 +192,8 @@ class LinearFunctions:
         weights_plus = np.maximum(self.matrix, np.zeros(self.matrix.shape))
         weights_minus = np.minimum(self.matrix, np.zeros(self.matrix.shape))
         return (
-            compute_lower(weights_minus, weights_plus, input_lower, input_upper)
-            + self.offset,
-            compute_upper(weights_minus, weights_plus, input_lower, input_upper)
-            + self.offset,
+            compute_lower(weights_minus, weights_plus, input_lower, input_upper) + self.offset,
+            compute_upper(weights_minus, weights_plus, input_lower, input_upper) + self.offset,
         )
 
     def compute_max_values(self, input_bounds):
@@ -219,20 +201,14 @@ class LinearFunctions:
         input_upper = input_bounds["out"]["u"]
         weights_plus = np.maximum(self.matrix, np.zeros(self.matrix.shape))
         weights_minus = np.minimum(self.matrix, np.zeros(self.matrix.shape))
-        return (
-            compute_upper(weights_minus, weights_plus, input_lower, input_upper)
-            + self.offset
-        )
+        return compute_upper(weights_minus, weights_plus, input_lower, input_upper) + self.offset
 
     def compute_min_values(self, input_bounds):
         input_lower = input_bounds["out"]["l"]
         input_upper = input_bounds["out"]["u"]
         weights_plus = np.maximum(self.matrix, np.zeros(self.matrix.shape))
         weights_minus = np.minimum(self.matrix, np.zeros(self.matrix.shape))
-        return (
-            compute_lower(weights_minus, weights_plus, input_lower, input_upper)
-            + self.offset
-        )
+        return compute_lower(weights_minus, weights_plus, input_lower, input_upper) + self.offset
 
     def get_lower_relu_relax(self, input_bounds):
         # get lower and upper bounds for the bound equation

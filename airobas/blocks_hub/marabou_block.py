@@ -3,11 +3,6 @@ import time
 from time import perf_counter
 
 import numpy as np
-from maraboupy import Marabou, MarabouCore
-from maraboupy.MarabouNetwork import MarabouNetwork  # (pip install maraboupy)
-from tensorflow.keras.layers import Activation, Dense
-from tensorflow.keras.models import Sequential
-from keras.models import clone_model
 from airobas.verif_pipeline import (
     BlockVerif,
     BlockVerifOutput,
@@ -15,10 +10,16 @@ from airobas.verif_pipeline import (
     ProblemContainer,
     StatusVerif,
 )
+from keras.models import clone_model
+from maraboupy import Marabou, MarabouCore
+from maraboupy.MarabouNetwork import MarabouNetwork  # (pip install maraboupy)
+from tensorflow.keras.layers import Activation, Dense
+from tensorflow.keras.models import Sequential
 
 logger = logging.getLogger(__name__)
 
-output_name='OUTPUT'
+output_name = "OUTPUT"
+
 
 def separate_activations(model: Sequential):
     """
@@ -29,7 +30,7 @@ def separate_activations(model: Sequential):
     """
     l = []
     new_model = Sequential()
-    #copy_model = clone_model(model)
+    # copy_model = clone_model(model)
     for layer in model.layers:
         if isinstance(layer, Dense):
             # Add a new Dense layer without activation
@@ -58,9 +59,7 @@ class MarabouSequential(MarabouNetwork):
     def __init__(self, model: Sequential):
         super().__init__()
         if not isinstance(model, Sequential):
-            raise ValueError(
-                "model should be Sequential but is a {} object".format(type(model))
-            )
+            raise ValueError("model should be Sequential but is a {} object".format(type(model)))
         self.keras_model = separate_activations(model)
         self.layers = self.keras_model.layers
         self.varMap = dict()
@@ -88,9 +87,7 @@ class MarabouSequential(MarabouNetwork):
             self.buildEquations(i)
 
     def _init_input_vars(self):
-        self.inputVars = np.asarray(self.varMap[self.layers[0].name], dtype="int")[
-            None, None
-        ]
+        self.inputVars = np.asarray(self.varMap[self.layers[0].name], dtype="int")[None, None]
 
     def _init_output_vars(self):
         global output_name
@@ -102,9 +99,7 @@ class MarabouSequential(MarabouNetwork):
         if isinstance(layer, Dense):
             # do something
             self.add_dense(index_layer)
-        elif (
-            isinstance(layer, Activation) and layer.get_config()["activation"] == "relu"
-        ):
+        elif isinstance(layer, Activation) and layer.get_config()["activation"] == "relu":
             # do something
             if update_relu:
                 self.add_relu(index_layer)
@@ -149,7 +144,7 @@ class MarabouSequential(MarabouNetwork):
         if len(input_var) != len(output_var):
             raise ValueError("input and output dimension of ReLU layer do not match")
 
-        for (i, j) in zip(input_var, output_var):
+        for i, j in zip(input_var, output_var):
             self.addRelu(i, j)
 
     def get_output_dim(self):
@@ -167,12 +162,8 @@ class MarabouSequential(MarabouNetwork):
         if result[0] == "sat":
             n_in = len(self.inputVars[0][0])
             n_out = len(self.outputVars[0][0])
-            input_sat = np.array(
-                [result[1][self.inputVars[0][0][i]] for i in range(n_in)]
-            )
-            output_sat = np.array(
-                [result[1][self.outputVars[0][0][i]] for i in range(n_out)]
-            )
+            input_sat = np.array([result[1][self.inputVars[0][0][i]] for i in range(n_in)])
+            output_sat = np.array([result[1][self.outputVars[0][0][i]] for i in range(n_out)])
         if result[0] == "TIMEOUT":
             logger.info(f"Time out !")
         return (
@@ -182,9 +173,7 @@ class MarabouSequential(MarabouNetwork):
         )
 
 
-def solve_stability_property(
-    network: MarabouSequential, x_min, x_max, y_min, y_max, timeout=0
-):
+def solve_stability_property(network: MarabouSequential, x_min, x_max, y_min, y_max, timeout=0):
     t_init = time.perf_counter()
     # Set Lower and Upper bound for the input perturbation
     for i, x_min_i in enumerate(x_min):
@@ -197,15 +186,11 @@ def solve_stability_property(
     for i in range(network.get_output_dim()):
         if np.isinf(y_min[i]) or np.isinf(y_max[i]):
             continue
-        equ_l = MarabouCore.Equation(
-            MarabouCore.Equation.LE
-        )  # greater or equal >= scalar
+        equ_l = MarabouCore.Equation(MarabouCore.Equation.LE)  # greater or equal >= scalar
         equ_l.addAddend(1, network.outputVars[0][0][i])
         equ_l.setScalar(y_min[i])
         # equ_l : f(x)[i]< Y_min[i]
-        equ_u = MarabouCore.Equation(
-            MarabouCore.Equation.GE
-        )  # greater or equal >= scalar
+        equ_u = MarabouCore.Equation(MarabouCore.Equation.GE)  # greater or equal >= scalar
         equ_u.addAddend(1, network.outputVars[0][0][i])
         equ_u.setScalar(y_max[i])
         # equ_u : f(x)[i]> Y_max[i]
@@ -216,7 +201,7 @@ def solve_stability_property(
     t_end_init = time.perf_counter()
     options = None
     if timeout:
-        options = Marabou.createOptions(timeoutInSeconds=int(timeout),verbosity=0)
+        options = Marabou.createOptions(timeoutInSeconds=int(timeout), verbosity=0)
     else:
         options = Marabou.createOptions(verbosity=0)
     result = network.solve_query(options=options)
@@ -233,17 +218,13 @@ class MarabouBlock(BlockVerif):
         data_container: DataContainer,
         **kwargs,
     ):
-        super().__init__(
-            problem_container=problem_container, data_container=data_container
-        )
+        super().__init__(problem_container=problem_container, data_container=data_container)
         self.options = kwargs
 
     def verif(self, indexes: np.ndarray) -> BlockVerifOutput:
         nb_points = len(indexes)
         output = BlockVerifOutput(
-            status=np.array(
-                [StatusVerif.UNKNOWN for i in range(nb_points)], dtype=StatusVerif
-            ),
+            status=np.array([StatusVerif.UNKNOWN for i in range(nb_points)], dtype=StatusVerif),
             inputs=[None for i in range(nb_points)],
             outputs=[None for i in range(nb_points)],
             build_time=0,
@@ -280,15 +261,9 @@ class MarabouBlock(BlockVerif):
             if score[2]:
                 status = StatusVerif.TIMEOUT
             output.status[index] = status
-            logger.info(
-                f"Current Verified (%) {np.sum(output.status == StatusVerif.VERIFIED) / nb_points * 100}"
-            )
-            logger.info(
-                f"Current Violated (%) {np.sum(output.status == StatusVerif.VIOLATED) / nb_points * 100}"
-            )
-            logger.info(
-                f"Current Timeout (%) {np.sum(output.status == StatusVerif.TIMEOUT) / nb_points * 100}"
-            )
+            logger.info(f"Current Verified (%) {np.sum(output.status == StatusVerif.VERIFIED) / nb_points * 100}")
+            logger.info(f"Current Violated (%) {np.sum(output.status == StatusVerif.VIOLATED) / nb_points * 100}")
+            logger.info(f"Current Timeout (%) {np.sum(output.status == StatusVerif.TIMEOUT) / nb_points * 100}")
         return output
 
     @staticmethod

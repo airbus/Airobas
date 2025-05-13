@@ -7,10 +7,6 @@ import keras
 import numpy as np
 import onnx
 import onnx.numpy_helper
-from keras.activations import linear, relu
-from keras.layers import Activation, Dense
-from keras.models import Sequential
-
 from airobas.blocks_hub.mip_blocks_lib.commons.layers import (
     InputLayer,
     InputType,
@@ -18,6 +14,9 @@ from airobas.blocks_hub.mip_blocks_lib.commons.layers import (
     Linear,
     Relu,
 )
+from keras.activations import linear, relu
+from keras.layers import Activation, Dense
+from keras.models import Sequential
 
 
 @dataclass
@@ -42,38 +41,19 @@ class NeuralNetwork:
         )
 
     def get_bounds(self, keys):
-        l_pre = [
-            self.get_lb(id_layer=k[0], node_in_layer=k[1], in_or_out="in") for k in keys
-        ]
-        u_pre = [
-            self.get_ub(id_layer=k[0], node_in_layer=k[1], in_or_out="in") for k in keys
-        ]
-        l_post = [
-            self.get_lb(id_layer=k[0], node_in_layer=k[1], in_or_out="out")
-            for k in keys
-        ]
-        u_post = [
-            self.get_ub(id_layer=k[0], node_in_layer=k[1], in_or_out="out")
-            for k in keys
-        ]
+        l_pre = [self.get_lb(id_layer=k[0], node_in_layer=k[1], in_or_out="in") for k in keys]
+        u_pre = [self.get_ub(id_layer=k[0], node_in_layer=k[1], in_or_out="in") for k in keys]
+        l_post = [self.get_lb(id_layer=k[0], node_in_layer=k[1], in_or_out="out") for k in keys]
+        u_post = [self.get_ub(id_layer=k[0], node_in_layer=k[1], in_or_out="out") for k in keys]
         return l_pre, u_pre, l_post, u_post
 
     def compute_keys(self):
-        self.all_keys = [
-            (i, x)
-            for i in range(len(self.layers))
-            for x in range(self.layers[i].output_shape)
-        ]
+        self.all_keys = [(i, x) for i in range(len(self.layers)) for x in range(self.layers[i].output_shape)]
         self.all_keys_per_layer = {
-            i: [(i, x) for x in range(self.layers[i].output_shape)]
-            for i in range(len(self.layers))
+            i: [(i, x) for x in range(self.layers[i].output_shape)] for i in range(len(self.layers))
         }
         self.nb_keys_relu = sum(
-            [
-                len(self.all_keys_per_layer[i])
-                for i in self.all_keys_per_layer
-                if isinstance(self.layers[i], Relu)
-            ]
+            [len(self.all_keys_per_layer[i]) for i in self.all_keys_per_layer if isinstance(self.layers[i], Relu)]
         )
         self.nb_layers = len(self.layers)
 
@@ -124,16 +104,8 @@ class NeuralNetwork:
             if node.op_type in ["Flatten", "Relu"]:
                 pass
             elif node.op_type == "Gemm":
-                [weights] = [
-                    onnx.numpy_helper.to_array(t)
-                    for t in model.graph.initializer
-                    if t.name == node.input[1]
-                ]
-                [bias] = [
-                    onnx.numpy_helper.to_array(t)
-                    for t in model.graph.initializer
-                    if t.name == node.input[2]
-                ]
+                [weights] = [onnx.numpy_helper.to_array(t) for t in model.graph.initializer if t.name == node.input[1]]
+                [bias] = [onnx.numpy_helper.to_array(t) for t in model.graph.initializer if t.name == node.input[2]]
                 if next_node.op_type == "Relu":
                     self.layers.append(Relu(weights.shape[0], weights, bias, i))
                 else:
@@ -214,9 +186,7 @@ class NeuralNetwork:
             layer.clean_vars()
 
 
-def extract_neural_network(
-    neural_network: NeuralNetwork, id_layer_input: int, id_last_layer: int
-):
+def extract_neural_network(neural_network: NeuralNetwork, id_layer_input: int, id_last_layer: int):
     # input constraints
     neural_net = NeuralNetwork()
     layer_input = neural_network.layers[id_layer_input]

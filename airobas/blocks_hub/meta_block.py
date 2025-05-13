@@ -1,7 +1,6 @@
 from typing import Dict, List, Tuple, Type
 
 import numpy as np
-
 from airobas.verif_pipeline import (
     BlockVerif,
     BlockVerifOutput,

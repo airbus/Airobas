@@ -1,6 +1,9 @@
 import numpy as np
-
-from airobas.blocks_hub.mip_blocks_lib.commons.neural_network import Linear, NeuralNetwork, Relu
+from airobas.blocks_hub.mip_blocks_lib.commons.neural_network import (
+    Linear,
+    NeuralNetwork,
+    Relu,
+)
 
 
 def random_input(neural_net: NeuralNetwork):
@@ -18,9 +21,7 @@ def random_input_with_noise(neural_net: NeuralNetwork, init_input, max_delta):
     return np.minimum(input_upper, np.maximum(init_input + delta, input_lower))
 
 
-def evaluate(
-    input_array: np.array, neural_net: NeuralNetwork, index_min=None, index_max=None
-):
+def evaluate(input_array: np.array, neural_net: NeuralNetwork, index_min=None, index_max=None):
     if index_min is None:
         index_min, _ = default_index(neural_net)
     if index_max is None or index_max == -1:
@@ -53,9 +54,7 @@ def get_relu_state(
         index_min, _ = default_index(neural_net)
     if index_max is None or index_max == -1:
         _, index_max = default_index(neural_net)
-    evaluation = evaluate(
-        input_array, neural_net, index_min=index_min, index_max=index_max
-    )
+    evaluation = evaluate(input_array, neural_net, index_min=index_min, index_max=index_max)
     dict_relu = {}
     for j in range(len(evaluation)):
         lay = neural_net.layers[j]

@@ -63,7 +63,7 @@ class DecomonBlock(BlockVerif):
             y_max=self.data_container.ubound_output_points[indexes, :],
         )
         t3 = time.perf_counter()
-        indexes = np.nonzero(labels[:, 1])
+        indexes = np.nonzero(labels[:, 1])[0]
         output.status[indexes] = StatusVerif.VERIFIED  # this method only conclude on "robust" points
         output.init_time_per_sample[indexes] = t2 - t1
         output.verif_time_per_sample[indexes] = t3 - t2

@@ -1,6 +1,7 @@
 import logging
 import time
 from time import perf_counter
+from typing import Dict
 
 import numpy as np
 from airobas.verif_pipeline import (
@@ -23,12 +24,18 @@ output_name = "OUTPUT"
 
 def separate_activations(model: Sequential):
     """
-    Marabou expect Relu Activation layers separated from linear layers.
-    This does the trick. (code subject to bug or api breaks)
-    :param model: initial sequential keras model
-    :return: a new model where the Activation are in separated layers.
+    Returns a new Keras Sequential model where Dense layer activations are
+    separated into distinct Activation layers.
+
+    This transformation is necessary for tools like Marabou, which expect
+    activation functions (e.g., ReLU) to be explicitly represented in separate layers.
+
+    Args:
+        model: Original Keras Sequential model.
+
+    Returns:
+        Sequential: A new model with separate Activation layers.
     """
-    l = []
     new_model = Sequential()
     # copy_model = clone_model(model)
     for layer in model.layers:
@@ -56,16 +63,41 @@ def separate_activations(model: Sequential):
 
 
 class MarabouSequential(MarabouNetwork):
+    """
+    A wrapper to convert a Keras Sequential model into a Marabou verifiable network.
+
+    This class separates activation functions from dense layers (required by Marabou),
+    initializes Marabou variables for each layer, builds the equation system, and enables
+    verification queries via Marabou.
+
+    Parameters
+    ----------
+    model : The Keras Sequential model to be parsed and verified.
+
+
+    Attributes
+    ----------
+    keras_model : A modified version of the input model with separate activation layers.
+    layers : List of layers in the modified Keras model.
+    varMap : Maps each layer's name to its associated Marabou variables.
+    inputVars : Marabou input variable indices.
+    outputVars : Marabou output variable indices.
+    """
+
     def __init__(self, model: Sequential):
         super().__init__()
         if not isinstance(model, Sequential):
             raise ValueError("model should be Sequential but is a {} object".format(type(model)))
         self.keras_model = separate_activations(model)
         self.layers = self.keras_model.layers
-        self.varMap = dict()
+        self.varMap: Dict[str, int] = dict()
         self.build()
 
     def build(self):
+        """
+        Initializes and maps Marabou variables for each layer and constructs
+        equations for Dense and ReLU layers.
+        """
         for layer in self.layers:
             # get input_shape
             input_dim = np.prod(layer.input_shape[1:])
@@ -87,13 +119,34 @@ class MarabouSequential(MarabouNetwork):
             self.buildEquations(i)
 
     def _init_input_vars(self):
+        """
+        Initializes the input variables for the Marabou network.
+        """
         self.inputVars = np.asarray(self.varMap[self.layers[0].name], dtype="int")[None, None]
 
     def _init_output_vars(self):
+        """
+        Initializes the output variables for the Marabou network.
+        """
         global output_name
         self.outputVars = np.asarray(self.varMap[output_name], dtype="int")[None, None]
 
     def buildEquations(self, index_layer, update_relu=True):
+        """
+        Constructs Marabou equations for a given layer.
+
+        Parameters
+        ----------
+        index_layer : int
+            Index of the layer to process.
+        update_relu : bool, optional
+            Whether to process ReLU activation layers (default is True).
+
+        Raises
+        ------
+        NotImplementedError
+            If the layer type is not supported (non-Dense, non-ReLU).
+        """
         layer = self.layers[index_layer]
 
         if isinstance(layer, Dense):
@@ -107,6 +160,20 @@ class MarabouSequential(MarabouNetwork):
             raise NotImplemented(layer)
 
     def get_output_layer(self, index_layer):
+        """
+        Returns the output variable mapping for a given layer.
+
+        Parameters
+        ----------
+        index_layer : int
+            The index of the current layer.
+
+        Returns
+        -------
+        list
+            A list of Marabou variable indices for the output.
+        """
+
         global output_name
         if index_layer + 1 == len(self.layers):
             output_var = self.varMap[output_name]
@@ -116,7 +183,13 @@ class MarabouSequential(MarabouNetwork):
         return output_var
 
     def add_dense(self, index_layer):
-        print("dense")
+        """
+        Adds equality constraints corresponding to a Dense layer.
+
+        Parameters
+        ----------
+        index_layer : Index of the Dense layer in the model.
+        """
         layer = self.layers[index_layer]
         input_var = self.varMap[layer.name]
         output_var = self.get_output_layer(index_layer)
@@ -136,6 +209,13 @@ class MarabouSequential(MarabouNetwork):
             self.addEquality(vars_eq, coeffs_eq, scalar, isProperty=False)
 
     def add_relu(self, index_layer):
+        """
+        Adds ReLU constraints to Marabou for an activation layer.
+
+        Parameters
+        ----------
+        index_layer : Index of the ReLU activation layer.
+        """
         print("relu")
         layer = self.layers[index_layer]
         input_var = self.varMap[layer.name]

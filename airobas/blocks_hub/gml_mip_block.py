@@ -44,10 +44,11 @@ logger = logging.getLogger(__name__)
 class GMLBrick(BlockVerif):
     """
     GMLBrick performs formal verification of a neural network using Gurobi's MILP solver.
-    
+
     It converts a Keras model into a set of linear constraints, adds input/output bound constraints,
     and solves the resulting MIP to check for correctness of the model within specified input intervals.
     """
+
     def __init__(
         self,
         problem_container: ProblemContainer,
@@ -66,7 +67,7 @@ class GMLBrick(BlockVerif):
         """
         super().__init__(problem_container=problem_container, data_container=data_container)
         self.model = problem_container.model
-        self.lp_model: gp.Model = None
+        self.lp_model: gp.Model
         self.x = None
         self.y = None
         self.constraint_nn = None

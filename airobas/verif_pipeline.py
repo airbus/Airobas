@@ -3,7 +3,7 @@ import time
 from abc import abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 # from .utils import merge_global_verif_outputs
 import keras
@@ -468,6 +468,7 @@ class BlockVerif:
         ...
 
     @staticmethod
+    @abstractmethod
     def get_name() -> str:
         """
         Get the name of the verification block.
@@ -540,7 +541,6 @@ def full_verification_pipeline(
         batch_size += 1
     list_global_verif = []
     t_n = 0
-    runtime_summary = {}  # key: method.__name__, value: total runtime in sec
     for i in range(batch_split):
         if verbose:
             print(f"Batch number {i}")
@@ -726,7 +726,7 @@ def merge_global_verif_outputs(list_global_verif: List[GlobalVerifOutput]) -> Gl
     total_build_time = 0.0
     merged_init_time_per_sample = []
     merged_verif_time_per_sample = []
-    merged_runtime_per_block = {}
+    merged_runtime_per_block: Dict[Any, Any] = {}
 
     for global_verif in list_global_verif:
         assert global_verif.methods == list_global_verif[0].methods  # make sure it's same list for all batches

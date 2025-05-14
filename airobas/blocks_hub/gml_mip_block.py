@@ -42,12 +42,28 @@ logger = logging.getLogger(__name__)
 
 
 class GMLBrick(BlockVerif):
+    """
+    GMLBrick performs formal verification of a neural network using Gurobi's MILP solver.
+    
+    It converts a Keras model into a set of linear constraints, adds input/output bound constraints,
+    and solves the resulting MIP to check for correctness of the model within specified input intervals.
+    """
     def __init__(
         self,
         problem_container: ProblemContainer,
         data_container: DataContainer,
         **kwargs,
     ):
+        """
+        Initialize GMLBrick.
+
+        Args:
+            problem_container: Contains the model and its metadata.
+            data_container: Contains input/output bound data for verification.
+            **kwargs: Optional arguments for configuration.
+                - do_bounds_computation (bool): Enable symbolic interval analysis (default: True).
+                - do_warm_start (bool): Enable warm-start initialization (default: False).
+        """
         super().__init__(problem_container=problem_container, data_container=data_container)
         self.model = problem_container.model
         self.lp_model: gp.Model = None
@@ -58,6 +74,14 @@ class GMLBrick(BlockVerif):
         self.options = kwargs
 
     def init_gml_model(self, x_min: np.ndarray, x_max: np.ndarray, y_min: np.ndarray):
+        """
+        Initialize the Gurobi MILP model with input/output bounds and neural network constraints.
+
+        Args:
+            x_min: Lower bounds of the input.
+            x_max: Upper bounds of the input.
+            y_min: Lower bounds of the output (used for initializing output variable).
+        """
         do_bounds_computation = self.options.get("do_bounds_computation", True)
         do_warm_start = self.options.get("do_warm_start", False)
         # Recompute bounds using interval arithmetic or decomon.
@@ -98,6 +122,12 @@ class GMLBrick(BlockVerif):
             self.do_warm_start()
 
     def do_warm_start(self, ri: Optional[np.ndarray] = None):
+        """
+        Warm-start the MILP solver with a feasible solution from a forward pass through the network.
+
+        Args:
+            ri: Optional input to use for warm-start. If None, a random input is generated.
+        """
         if ri is None:
             ri = random_input(self.neural_net)
         evaluates = evaluate(input_array=ri, neural_net=self.neural_net)
@@ -111,6 +141,18 @@ class GMLBrick(BlockVerif):
             output.Start = evaluates[j][1][None, :]
 
     def method_mip(self, x_min, x_max, y_min, y_max, **kwargs):
+        """
+        Perform MIP-based verification across a batch of input regions.
+
+        Args:
+            x_min: Lower bounds for input intervals (batch).
+            x_max: Upper bounds for input intervals (batch).
+            y_min: Lower bounds for output constraints (batch).
+            y_max: Upper bounds for output constraints (batch).
+
+        Returns:
+            Results of the verification including statuses, counterexamples, and timing.
+        """
         nb_points = x_min.shape[0]
         output = BlockVerifOutput(
             status=np.empty(nb_points, dtype=StatusVerif),
@@ -166,6 +208,15 @@ class GMLBrick(BlockVerif):
         return output
 
     def verif(self, indexes: np.ndarray) -> BlockVerifOutput:
+        """
+        Verify neural network correctness for a subset of input regions.
+
+        Args:
+            indexes: Indices into the data container specifying which regions to verify.
+
+        Returns:
+            Verification results per selected region.
+        """
         return self.method_mip(
             x_min=self.data_container.lbound_input_points[indexes, :],
             x_max=self.data_container.ubound_input_points[indexes, :],

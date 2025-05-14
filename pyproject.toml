@@ -7,23 +7,17 @@ name = "airobas"
 description = "AI ROBustness ASsessment"
 readme = "README.md"
 authors = [
-    {email ="audrey.galametz@airbus.com"},
+    {email ="melanie.ducoffe@airbus.com"},
 ]
 requires-python = ">=3.9"
 dependencies =[
-    "pandas",
     "keras==2.15.0",
-    "scikit-learn",
-    "smt",
-    "scipy",
     "cleverhans",
     "decomon==0.1.1",
     "gurobi-machinelearning",
     "maraboupy==1.0.0",
     "onnx",
-    "ipywidgets",
     "numba",
-    "matplotlib",
     "numpy >=1.23",
 ]
 

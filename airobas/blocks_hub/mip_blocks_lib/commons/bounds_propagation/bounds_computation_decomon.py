@@ -26,7 +26,7 @@ from airobas.blocks_hub.mip_blocks_lib.commons.neural_network import (
     NeuralNetwork,
     neural_network_to_keras,
 )
-from tensorflow.python.keras.models import Model  # , Sequential, load_model
+from keras.models import Model  # , Sequential, load_model
 
 logger = logging.getLogger(__file__)
 

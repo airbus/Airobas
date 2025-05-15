@@ -11,11 +11,10 @@ from airobas.verif_pipeline import (
     ProblemContainer,
     StatusVerif,
 )
-from keras.models import clone_model
+from keras.layers import Activation, Dense
+from keras.models import Sequential, clone_model
 from maraboupy import Marabou, MarabouCore
 from maraboupy.MarabouNetwork import MarabouNetwork  # (pip install maraboupy)
-from tensorflow.keras.layers import Activation, Dense
-from tensorflow.keras.models import Sequential
 
 logger = logging.getLogger(__name__)
 

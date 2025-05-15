@@ -51,11 +51,11 @@ class DecomonBlock(BlockVerif):
         x_min = self.data_container.lbound_input_points[indexes, :]
         x_max = self.data_container.ubound_input_points[indexes, :]
         t1 = time.perf_counter()
-        decomon_model = clone(self.problem_container.model)
+        decomon_model = clone(self.problem_container.model, final_ibp=True, final_affine=False)
         output.build_time = time.perf_counter() - t1
         box = np.concatenate([x_min[:, None], x_max[:, None]], 1)
         t2 = time.perf_counter()
-        y_up, y_low = decomon_model.predict(box)
+        y_low, y_up = decomon_model.predict(box)
         labels = check_SB_unsat(
             y_pred_min=y_low,
             y_pred_max=y_up,

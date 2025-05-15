@@ -11,14 +11,14 @@ authors = [
 ]
 requires-python = ">=3.9"
 dependencies =[
-    "keras==2.15.0",
+    "keras",
+    "torch",
     "cleverhans",
-    "decomon==0.1.1",
-    "gurobi-machinelearning",
     "maraboupy==1.0.0",
     "onnx",
     "numba",
     "numpy >=1.23",
+    "decomon @ git+https://github.com/ducoffeM/decomon@refactor"
 ]
 
 dynamic = ["version"]

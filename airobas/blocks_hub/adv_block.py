@@ -1,9 +1,8 @@
 import time
 from typing import Dict, List, Optional
 
+import keras.ops as K
 import numpy as np
-import tensorflow as tf
-import tensorflow.keras.backend as K
 from airobas.blocks_hub.meta_block import MetaBlock
 from airobas.verif_pipeline import (
     BlockVerif,
@@ -12,8 +11,11 @@ from airobas.verif_pipeline import (
     ProblemContainer,
     StatusVerif,
 )
-from cleverhans.tf2.attacks.fast_gradient_method import fast_gradient_method
-from cleverhans.tf2.attacks.projected_gradient_descent import projected_gradient_descent
+
+# from cleverhans.torch.attacks.fast_gradient_method import fast_gradient_method
+# from cleverhans.torch.attacks.projected_gradient_descent import projected_gradient_descent
+from .adversarial.fgsm import fast_gradient_method
+from .adversarial.pgd import projected_gradient_descent
 
 
 def custom_adv_loss(logits, mask_output, mask_target_up):
@@ -34,7 +36,10 @@ def custom_adv_loss(logits, mask_output, mask_target_up):
     Returns:
         A Tensor containing the adversarial loss, computed as the sum of the targeted attack on the output predictions.
     """
-    return K.sum(mask_output * (logits * K.expand_dims(mask_target_up, -1)), -1)
+    # logits = K.convert_to_tensor(logits, dtype='float32')
+    mask_target_up = K.convert_to_tensor(mask_target_up, dtype="float32")
+    mask_output = K.convert_to_tensor(mask_output, dtype="float32")
+    return K.sum(mask_output * (logits * K.expand_dims(mask_target_up, -1)))
 
 
 def check_SB_sat(Y_pred, Y_min, Y_max):
@@ -102,12 +107,12 @@ def adv_func_priv(model, X_min, X_max, Y_min, Y_max, loss_fn, fgs=True, target_i
         # run fast gradient sign
         X_adv = fast_gradient_method(
             model,
-            tf.constant(X),
+            K.convert_to_tensor(X, dtype="float32"),
             eps=eps,
             norm=np.inf,
             loss_fn=loss_fn,
-            clip_min=X_min,
-            clip_max=X_max,
+            clip_min=K.convert_to_tensor(X_min, dtype="float32"),
+            clip_max=K.convert_to_tensor(X_max, dtype="float32"),
             y=Y_min,
         )
 
@@ -116,19 +121,20 @@ def adv_func_priv(model, X_min, X_max, Y_min, Y_max, loss_fn, fgs=True, target_i
         nb_iter = kwargs.get("nb_iter", 400)
         X_adv = projected_gradient_descent(
             model,
-            tf.constant(X),
+            K.convert_to_tensor(X, dtype="float32"),
             eps=eps,
             eps_iter=eps_iter,
             nb_iter=nb_iter,
             norm=np.inf,
             loss_fn=loss_fn,
-            clip_min=X_min,
-            clip_max=X_max,
+            clip_min=K.convert_to_tensor(X_min, dtype="float32"),
+            clip_max=K.convert_to_tensor(X_max, dtype="float32"),
             y=Y_min,
         )
 
     # determine the bounds
     Y_pred = model.predict(X_adv, verbose=0)
+    X_adv = X_adv.cpu().detach()
     # Y_min, Y_max = discard_untarget_outputs_verif(Y_min, Y_max, target_index, model.output_shape[-1])
     labels = check_SB_sat(Y_pred, Y_min, Y_max)
     if preds:
@@ -157,7 +163,7 @@ def get_adv_func(model, index_target, up, fgs=True, preds=False, **kwargs):
     mask_adv = np.zeros((1, output_dim), dtype="float32")
     mask_adv[:, index_target] = 1
 
-    def loss_fn(labels, logits):
+    def loss_fn(logits, labels):
         return custom_adv_loss(logits, mask_adv[None], mask_target_up[None])
 
     def adv_(model, X_min, X_max, Y_min, Y_max, target_index=None):

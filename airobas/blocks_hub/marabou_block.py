@@ -38,11 +38,11 @@ def separate_activations(model: Sequential):
     new_model = Sequential()
     # copy_model = clone_model(model)
     for layer in model.layers:
-        if isinstance(layer, Dense):
+        if isinstance(layer, Dense) and layer.get_config()["activation"] != "linear":
             # Add a new Dense layer without activation
             new_dense_layer = Dense(
                 units=layer.units,
-                input_shape=layer.input_shape[1:],
+                input_shape=layer.input.shape[1:],
                 kernel_initializer=layer.kernel_initializer,
                 bias_initializer=layer.bias_initializer,
             )
@@ -99,7 +99,7 @@ class MarabouSequential(MarabouNetwork):
         """
         for layer in self.layers:
             # get input_shape
-            input_dim = np.prod(layer.input_shape[1:])
+            input_dim = np.prod(layer.input.shape[1:])
             self.varMap[layer.name] = []
             for i in range(input_dim):
                 j = self.getNewVariable()

@@ -274,7 +274,7 @@ def solve_query(network,options=None):
         output_sat,
     )
 
-def solve_stability_property(network: Union[MarabouSequential, MarabouNetworkONNX], x_min, x_max, y_min, y_max, options=None):
+def solve_stability_property_deprected(network: Union[MarabouSequential, MarabouNetworkONNX], x_min, x_max, y_min, y_max, options=None):
     if isinstance(network,MarabouSequential):
         output_dim = network.get_output_dim()
     elif isinstance(network,MarabouNetworkONNX):
@@ -317,6 +317,40 @@ def solve_stability_property(network: Union[MarabouSequential, MarabouNetworkONN
     #print(f'marabou solve: {result[0]}')
     return result, (t_init, t_end_init, t_end_solve)
 
+def solve_stability_property(network: Union[MarabouSequential, MarabouNetworkONNX], x_min, x_max, y_min, y_max, options=None,logits_rank=None):
+
+    t_init = time.perf_counter()
+    # Set Lower and Upper bound for the input perturbation
+    for i, x_min_i in enumerate(x_min):
+        network.setLowerBound(network.inputVars[0][0][i], x_min_i)
+    for i, x_max_i in enumerate(x_max):
+        network.setUpperBound(network.inputVars[0][0][i], x_max_i)
+        
+    # find a sample that is either greater than Y_max or lower than Y_min
+    for (coeff, bound) in zip([1,-1],[y_min,y_max]):
+        order_bounds = np.argsort(logits_rank)[::-1]
+        for i in order_bounds:
+            if np.abs(bound[i])>= 1e6:
+                continue
+            # equ_l : f(x)[i]< Y_min[i] or f(x)[i]> Y_max[i]
+            network.addInequality([network.outputVars[0][0][i]],\
+                                [coeff],
+                                coeff*bound[i], 
+                                isProperty=True)
+            if isinstance(network,MarabouSequential): 
+                t_end_init = time.perf_counter() # to verify 
+                result = network.solve_query(options)
+            elif isinstance(network,MarabouNetworkONNX): 
+                t_end_init = time.perf_counter()
+                result = solve_query(network,options)
+            t_end_solve = time.perf_counter()
+            network.additionalEquList.clear()
+            
+            exit_code = result[0] # solve_query return: [result[0] == "sat", result[0] == "unsat", result[0] == "TIMEOUT"],
+            if exit_code[0] or exit_code[-1]:
+                break
+    network.clearProperty()
+    return result, (t_init, t_end_init, t_end_solve)
 class MarabouBlock(BlockVerif):
     def __init__(
         self,
@@ -365,7 +399,6 @@ class MarabouBlock(BlockVerif):
         y_min = self.data_container.lbound_output_points[indexes, :]
         y_max = self.data_container.ubound_output_points[indexes, :]
         for index in range(nb_points):
-            import pdb; pdb.set_trace()
             ((score, input_sat, output_sat), times) =  solve_stability_property(
                 network,
                 x_min=x_min[index],
@@ -373,6 +406,7 @@ class MarabouBlock(BlockVerif):
                 y_min=y_min[index],
                 y_max=y_max[index],
                 options= self.options,
+                logits_rank = self.data_container.output_points[index],
                 #timeout=self.options.get("time_out", 200),
             )
             output.init_time_per_sample[index] = times[1] - times[0]

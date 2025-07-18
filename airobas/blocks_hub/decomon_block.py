@@ -3,7 +3,7 @@ import time
 import numpy as np
 from airobas.verif_pipeline import BlockVerif, BlockVerifOutput, StatusVerif
 from decomon.models import clone
-
+from termcolor import colored
 
 def check_SB_unsat(y_pred_min, y_pred_max, y_min, y_max):
     """
@@ -62,9 +62,12 @@ class DecomonBlock(BlockVerif):
             y_min=self.data_container.lbound_output_points[indexes, :],
             y_max=self.data_container.ubound_output_points[indexes, :],
         )
+        
         t3 = time.perf_counter()
         indexes = np.nonzero(labels[:, 1])[0]
         output.status[indexes] = StatusVerif.VERIFIED  # this method only conclude on "robust" points
         output.init_time_per_sample[indexes] = t2 - t1
         output.verif_time_per_sample[indexes] = t3 - t2
+
+        print(colored(f"\n\nTime to init decomon model: {t2 - t1}\nTime to verify property (decomon): {t3 - t2}, ",'green'))
         return output

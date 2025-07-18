@@ -1,7 +1,7 @@
 import logging
 import time
 from time import perf_counter
-from typing import Dict
+from typing import Dict,Union
 
 import numpy as np
 from airobas.verif_pipeline import (
@@ -14,8 +14,9 @@ from airobas.verif_pipeline import (
 from keras.layers import Activation, Dense
 from keras.models import Sequential, clone_model
 from maraboupy import Marabou, MarabouCore
+from maraboupy.MarabouNetworkONNX import MarabouNetworkONNX
 from maraboupy.MarabouNetwork import MarabouNetwork  # (pip install maraboupy)
-
+from termcolor import colored
 logger = logging.getLogger(__name__)
 
 output_name = "OUTPUT"
@@ -156,6 +157,7 @@ class MarabouSequential(MarabouNetwork):
             if update_relu:
                 self.add_relu(index_layer)
         else:
+            print(type(layer))
             raise NotImplemented(layer)
 
     def get_output_layer(self, index_layer):
@@ -229,8 +231,8 @@ class MarabouSequential(MarabouNetwork):
     def get_output_dim(self):
         global output_name
         return len(self.varMap[output_name])
-
-    def solve_query(self, options=None):
+    
+    def solve_query(self,options=None):
         if options is None:
             result = self.solve(verbose=False)
         else:
@@ -251,8 +253,33 @@ class MarabouSequential(MarabouNetwork):
             output_sat,
         )
 
+def solve_query(network,options=None):
+    if options is None:
+        result = network.solve(verbose=False)
+    else:
+        result = network.solve(verbose=False, options=options)
+    input_sat = None
+    output_sat = None
 
-def solve_stability_property(network: MarabouSequential, x_min, x_max, y_min, y_max, timeout=0):
+    if result[0] == "sat":
+        n_in = len(network.inputVars[0][0])
+        n_out = len(network.outputVars[0][0])
+        input_sat = np.array([result[1][network.inputVars[0][0][i]] for i in range(n_in)])
+        output_sat = np.array([result[1][network.outputVars[0][0][i]] for i in range(n_out)])
+    if result[0] == "TIMEOUT":
+        logger.info(f"Time out !")
+    return (
+        [result[0] == "sat", result[0] == "unsat", result[0] == "TIMEOUT"],
+        input_sat,
+        output_sat,
+    )
+
+def solve_stability_property(network: Union[MarabouSequential, MarabouNetworkONNX], x_min, x_max, y_min, y_max, options=None):
+    if isinstance(network,MarabouSequential):
+        output_dim = network.get_output_dim()
+    elif isinstance(network,MarabouNetworkONNX):
+        output_dim = len(network.outputVars[0][0])
+
     t_init = time.perf_counter()
     # Set Lower and Upper bound for the input perturbation
     for i, x_min_i in enumerate(x_min):
@@ -262,7 +289,8 @@ def solve_stability_property(network: MarabouSequential, x_min, x_max, y_min, y_
     # find a sample that is either greater than Y_max or lower than Y_min
     equ_list = []
 
-    for i in range(network.get_output_dim()):
+    for i in range(output_dim):
+        #print(f"Old-Encoding\nmax diff inputs bounds: {np.max(x_max-x_min)}\n output lowe {y_min[i]}, output upper {y_max[i]}")
         if np.isinf(y_min[i]) or np.isinf(y_max[i]):
             continue
         equ_l = MarabouCore.Equation(MarabouCore.Equation.LE)  # greater or equal >= scalar
@@ -277,18 +305,17 @@ def solve_stability_property(network: MarabouSequential, x_min, x_max, y_min, y_
         equ_list.append([equ_u])  # one disjunction
 
     network.addDisjunctionConstraint(equ_list)
-    t_end_init = time.perf_counter()
-    options = None
-    if timeout:
-        options = Marabou.createOptions(timeoutInSeconds=int(timeout), verbosity=0)
-    else:
-        options = Marabou.createOptions(verbosity=0)
-    result = network.solve_query(options=options)
+    if isinstance(network,MarabouSequential): 
+        t_end_init = time.perf_counter()
+        result = network.solve_query(options)
+    elif isinstance(network,MarabouNetworkONNX): 
+        t_end_init = time.perf_counter()
+        result = solve_query(network,options)
     t_end_solve = time.perf_counter()
     network.clearProperty()
     network.disjunctionList = []
+    #print(f'marabou solve: {result[0]}')
     return result, (t_init, t_end_init, t_end_solve)
-
 
 class MarabouBlock(BlockVerif):
     def __init__(
@@ -298,7 +325,22 @@ class MarabouBlock(BlockVerif):
         **kwargs,
     ):
         super().__init__(problem_container=problem_container, data_container=data_container)
-        self.options = kwargs
+        # Initialize self.marabou_NetworkONNX 
+        if 'marabou_ONNX' in kwargs:
+            self.marabou_NetworkONNX = kwargs['marabou_ONNX']
+            kwargs.pop('marabou_ONNX')
+        else:
+            self.marabou_NetworkONNX = None
+        # Initialize self.options by passing the collected kwargs to Marabou.createOption
+        self.options = Marabou.createOptions(**kwargs)
+        
+
+    def display_options(self):
+        """Helper method to display current Marabou options."""
+        print("\n--- Current Marabou Options ---")
+        for key, value in self.options.items():
+            print(f"  {key}: {value}")
+        print("-------------------------------")
 
     def verif(self, indexes: np.ndarray) -> BlockVerifOutput:
         nb_points = len(indexes)
@@ -310,26 +352,32 @@ class MarabouBlock(BlockVerif):
             init_time_per_sample=np.empty(nb_points, dtype=float),
             verif_time_per_sample=np.empty(nb_points, dtype=float),
         )
-        t1 = perf_counter()
-        network = MarabouSequential(model=self.problem_container.model)
-        t2 = perf_counter()
-        output.build_time = t2 - t1
+        if self.marabou_NetworkONNX is None:
+            t1 = perf_counter()
+            network = MarabouSequential(model=self.problem_container.model)
+            t2 = perf_counter()
+            output.build_time = t2 - t1
+        else:
+            network = self.marabou_NetworkONNX
+            output.build_time = 0
         x_min = self.data_container.lbound_input_points[indexes, :]
         x_max = self.data_container.ubound_input_points[indexes, :]
         y_min = self.data_container.lbound_output_points[indexes, :]
         y_max = self.data_container.ubound_output_points[indexes, :]
         for index in range(nb_points):
-            ((score, input_sat, output_sat), times) = solve_stability_property(
+            ((score, input_sat, output_sat), times) =  solve_stability_property(
                 network,
                 x_min=x_min[index],
                 x_max=x_max[index],
                 y_min=y_min[index],
                 y_max=y_max[index],
+                options= self.options,
                 timeout=self.options.get("time_out", 200),
             )
             output.init_time_per_sample[index] = times[1] - times[0]
             output.verif_time_per_sample[index] = times[2] - times[1]
             status = StatusVerif.UNKNOWN
+            
             if score[0]:
                 # Found counter example
                 status = StatusVerif.VIOLATED
@@ -343,6 +391,11 @@ class MarabouBlock(BlockVerif):
             logger.info(f"Current Verified (%) {np.sum(output.status == StatusVerif.VERIFIED) / nb_points * 100}")
             logger.info(f"Current Violated (%) {np.sum(output.status == StatusVerif.VIOLATED) / nb_points * 100}")
             logger.info(f"Current Timeout (%) {np.sum(output.status == StatusVerif.TIMEOUT) / nb_points * 100}")
+            # times returned by solve_query_property = (t_init, t_end_init, t_end_solve)
+            print(colored(f"\n\n\
+                    Time to build marabou model: {output.build_time}\n \
+                    Time to init marabou model: {output.init_time_per_sample[index]}\n \
+                    Time to verify property (marabou): {output.verif_time_per_sample[index]}, ",'red'))
         return output
 
     @staticmethod

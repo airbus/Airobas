@@ -365,6 +365,7 @@ class MarabouBlock(BlockVerif):
         y_min = self.data_container.lbound_output_points[indexes, :]
         y_max = self.data_container.ubound_output_points[indexes, :]
         for index in range(nb_points):
+            import pdb; pdb.set_trace()
             ((score, input_sat, output_sat), times) =  solve_stability_property(
                 network,
                 x_min=x_min[index],
@@ -372,7 +373,7 @@ class MarabouBlock(BlockVerif):
                 y_min=y_min[index],
                 y_max=y_max[index],
                 options= self.options,
-                timeout=self.options.get("time_out", 200),
+                #timeout=self.options.get("time_out", 200),
             )
             output.init_time_per_sample[index] = times[1] - times[0]
             output.verif_time_per_sample[index] = times[2] - times[1]

@@ -17,6 +17,7 @@ from airobas.verif_pipeline import (
 from .adversarial.fgsm import fast_gradient_method
 from .adversarial.pgd import projected_gradient_descent
 
+from termcolor import colored
 
 def custom_adv_loss(logits, mask_output, mask_target_up):
     """
@@ -71,7 +72,7 @@ def check_SB_sat(Y_pred, Y_min, Y_max):
     return labels
 
 
-def adv_func_priv(model, X_min, X_max, Y_min, Y_max, loss_fn, fgs=True, target_index=None, preds=False, **kwargs):
+def adv_func_priv(model, X_min, X_max, Y_min, Y_max, loss_fn, fgs=True, target_index=None, preds=False, verbose=False, **kwargs):
     """
     Generate adversarial samples constrained within input stability bounds using
     either Fast Gradient Sign Method (FGSM) or Projected Gradient Descent (PGD).
@@ -102,7 +103,8 @@ def adv_func_priv(model, X_min, X_max, Y_min, Y_max, loss_fn, fgs=True, target_i
     # update_summary(kwargs.get("summary_writer", None), timestamp=ts, value=0, key="runtime")
     # one hot encoding for masking the output that will not be targeted
 
-    eps = max(np.abs(X_min).max(), np.abs(X_max).max())
+    eps = np.max(X_max - X_min) / 2.0
+    nb_iter = 0
     if fgs:
         # run fast gradient sign
         X_adv = fast_gradient_method(
@@ -131,7 +133,10 @@ def adv_func_priv(model, X_min, X_max, Y_min, Y_max, loss_fn, fgs=True, target_i
             clip_max=K.convert_to_tensor(X_max, dtype="float32"),
             y=Y_min,
         )
-
+    te = time.perf_counter()
+    t_attack = te - ts
+    if verbose:
+        print(colored(f"\n\nTime to generate an adversarial sample: {t_attack}, fgs : {fgs}, nb_iter : {nb_iter}",'green'))
     # determine the bounds
     Y_pred = model.predict(X_adv, verbose=0)
     X_adv = X_adv.cpu().detach()

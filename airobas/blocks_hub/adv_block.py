@@ -19,7 +19,7 @@ from .adversarial.pgd import projected_gradient_descent
 
 from termcolor import colored
 
-def custom_adv_loss(logits, mask_output, mask_target_up):
+def custom_adv_loss(logits, mask_output, mask_target_up, op=K.sum):
     """
     Adversarial loss to increase or decrease a specific output prediction.
 
@@ -32,7 +32,7 @@ def custom_adv_loss(logits, mask_output, mask_target_up):
         logits: The model's raw output predictions (logits) before softmax or activation.
         mask_output: A one-hot encoded mask tensor, where the target output's prediction is indicated.
         mask_target_up: A mask that specifies whether to attack by increasing (+1) or decreasing (-1)
-                                            the output. Positive values increase the output, while negative values decrease it.
+                    the output. Positive values increase the output, while negative values decrease it.
 
     Returns:
         A Tensor containing the adversarial loss, computed as the sum of the targeted attack on the output predictions.
@@ -40,7 +40,7 @@ def custom_adv_loss(logits, mask_output, mask_target_up):
     # logits = K.convert_to_tensor(logits, dtype='float32')
     mask_target_up = K.convert_to_tensor(mask_target_up, dtype="float32")
     mask_output = K.convert_to_tensor(mask_output, dtype="float32")
-    return K.sum(mask_output * (logits * K.expand_dims(mask_target_up, -1)))
+    return K.mean(op(mask_output * (logits * K.expand_dims(mask_target_up, -1)),-1))
 
 
 def check_SB_sat(Y_pred, Y_min, Y_max):
@@ -113,8 +113,8 @@ def adv_func_priv(model, X_min, X_max, Y_min, Y_max, loss_fn, fgs=True, target_i
             eps=eps,
             norm=np.inf,
             loss_fn=loss_fn,
-            clip_min=K.convert_to_tensor(X_min, dtype="float32"),
-            clip_max=K.convert_to_tensor(X_max, dtype="float32"),
+            clip_min=K.convert_to_tensor(X_min+X, dtype="float32"),
+            clip_max=K.convert_to_tensor(X_max+X, dtype="float32"),
             y=Y_min,
         )
 
@@ -129,8 +129,8 @@ def adv_func_priv(model, X_min, X_max, Y_min, Y_max, loss_fn, fgs=True, target_i
             nb_iter=nb_iter,
             norm=np.inf,
             loss_fn=loss_fn,
-            clip_min=K.convert_to_tensor(X_min, dtype="float32"),
-            clip_max=K.convert_to_tensor(X_max, dtype="float32"),
+            clip_min=K.convert_to_tensor(X_min+X, dtype="float32"),
+            clip_max=K.convert_to_tensor(X_max+X, dtype="float32"),
             y=Y_min,
         )
     te = time.perf_counter()
@@ -162,14 +162,19 @@ def get_adv_func(model, index_target, up, fgs=True, preds=False, **kwargs):
     mask_target_up = np.ones((1, 1), dtype="float32")
     if not up:
         mask_target_up *= -1
-
+        
     # generate random target
     output_dim = model.output_shape[-1]
-    mask_adv = np.zeros((1, output_dim), dtype="float32")
-    mask_adv[:, index_target] = 1
+    if index_target == -1:
+        mask_adv = np.ones((1, output_dim), dtype="float32")
+        op = K.max
+    else:
+        mask_adv = np.zeros((1, output_dim), dtype="float32")
+        mask_adv[:, index_target] = 1
+        op = K.sum
 
     def loss_fn(logits, labels):
-        return custom_adv_loss(logits, mask_adv[None], mask_target_up[None])
+        return custom_adv_loss(logits, mask_adv[None], mask_target_up[None],op=op)
 
     def adv_(model, X_min, X_max, Y_min, Y_max, target_index=None):
         """adversarial attacks for validation (can only found unstable samples)

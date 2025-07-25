@@ -37,6 +37,11 @@ def separate_activations(model: Sequential):
         Sequential: A new model with separate Activation layers.
     """
     new_model = Sequential()
+
+    if not model.built:
+        raise ValueError("The input Keras model must be built before separating activations.")
+    original_input_shape = model.input_shape
+
     # copy_model = clone_model(model)
     for layer in model.layers:
         if isinstance(layer, Dense) and layer.get_config()["activation"] != "linear":
@@ -59,6 +64,10 @@ def separate_activations(model: Sequential):
         else:
             # Add non-Dense layers as they are
             new_model.add(layer)
+    if original_input_shape:
+        new_model.build(input_shape=original_input_shape) # Use the full shape including batch dim
+    else:
+        print("Warning: Original model's input_shape was not determined, new_model might not be fully built.")
     return new_model
 
 
